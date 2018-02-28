@@ -1,0 +1,88 @@
+#main {
+    position: absolute;
+    top: 0;
+    left: 15%;
+    border: solid gray;
+    border-width: 0 1px 1px 1px;
+    width: 70%;
+    height: 70%;
+}
+
+#main .parameters {
+    position: absolute;
+    z-index: 1;
+    left: 20px;
+    bottom: 20px;
+}
+
+#main .parameters .rows {
+    display: flex;
+    justify-items: center;
+}
+
+#main .parameters .tip_label {
+    height: 20px;
+    float: left;
+    font-family: sans-serif;
+    font-size: 13px;
+    color: white;
+}
+
+#main .parameters .rows input[type=range] {
+    margin-left: 5px;
+    background: -webkit-linear-gradient(#DDDDDD, #DDDDDD) no-repeat, #737373;
+    -webkit-appearance: none;
+    width: 150px;
+    height: 2px;
+    border-radius: 1px;
+    border: none;
+    display: inline-block;
+    margin-top: 9px;
+}
+
+#main .parameters input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    border: none;
+    height: 10px;
+    width: 10px;
+    border-radius: 50%;
+    background-color: white;
+}
+
+#main .parameters input[type=range]:focus {
+    outline: none;
+}
+
+#force_mini_map {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    border: solid gray;
+    border-width: 2px 0 0 2px;
+    background: #1A1A1A;
+    z-index: 10;
+}
+
+#mini_map {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    border: solid gray;
+    border-width: 2px 0 0 2px;
+    background: #1A1A1A;
+    z-index: 10;
+}
+
+#main .rect_selection {
+    stroke-dasharray: 2;
+    stroke: white;
+    fill: white;
+    fill-opacity: 0.3;
+}
+
+.mini_background {
+    stroke: white;
+    stroke-width: 1;
+    fill: white;
+    fill-opacity: 0.3;
+}
