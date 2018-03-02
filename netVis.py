@@ -1,12 +1,12 @@
 # coding=utf-8
-from flask import Flask, request
-from flask import render_template, jsonify
-import pandas as pd
-from igraph import *
 import csv
 import json
-import os
-import calNetwork as features
+import calNetwork
+
+import pandas as pd
+from flask import Flask, request
+from flask import render_template, jsonify
+from igraph import *
 
 all_files_data = []
 layout_data = []
@@ -60,7 +60,7 @@ def get_front_layout_data():
             result['nodes'].append({'id': item['target']})
     result['links'] = layout_data
 
-    features.cal_characters_arguments(result, layout_type)
+    calNetwork.cal_characters_arguments(result, layout_type)
     return jsonify(result)
 
 
@@ -101,7 +101,7 @@ def get_back_layout_data():
                 edge['y2'] = node['y']
         result['links'].append(edge)
 
-    features.cal_characters_arguments(result, layout_type)
+    calNetwork.cal_characters_arguments(result, layout_type)
     return jsonify(result)
 
 
@@ -134,7 +134,7 @@ def get_brush_extent_data():
     if layout_type != 'force' and layout_type != 'bundle':
         cal_back_layout_data(nodes, result, layout_type)
 
-    features.cal_characters_arguments(result,layout_type)
+    calNetwork.cal_characters_arguments(result, layout_type)
     return jsonify(result)
 
 
