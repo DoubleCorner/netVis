@@ -30,6 +30,10 @@
     <span class="time"></span>
 </div>
 <div id="all_view">
+    <form role="form" method="post" enctype=multipart/form-data>
+        <input type="file" id="uploadFile" style="visibility:hidden" onchange="control_chart.handleFile(this.files,this.value)">
+    </form>
+
     <div id="control"></div>
 
     <div id="main"></div>

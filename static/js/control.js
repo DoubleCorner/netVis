@@ -21,8 +21,10 @@ function ControlChart() {
         },
         '筛选数据保存': function () {
             Export.saveAsCsv(info_table.getData());
+        },
+        '上传文件': function () {
+            $("#uploadFile").click();
         }
-
     };
     /*默认初始化布局*/
     now_layout_type = 'force';
@@ -143,6 +145,7 @@ function ControlChart() {
     f4.add(obj, '主视图截图');
     f4.add(obj, '自定义截图');
     f4.add(obj, '筛选数据保存');
+    f4.add(obj, '上传文件');
     f1.open();
     f2.open();
     f3.open();
@@ -152,6 +155,49 @@ function ControlChart() {
 
     var clearMainChart = function () {
         document.getElementById("main").innerHTML = "";
+    };
+
+    ControlChart.prototype.handleFile = function (file, value) {
+        if (value === "") return false;
+        var file_name = file[0].name;
+        if (!file_name || !(file_name.endsWith(".csv"))) {
+            alert("请上传文件格式为.csv的文本文件。");
+            //重置当前input的默认值，防止该文件无法再次上传
+            $("#uploadFile").val("").change();
+            return false;
+        }
+        var file_data = new FormData();
+        file_data.append("upload", $("#uploadFile")[0].files[0]);
+        $.ajax({
+            type: "post",
+            url: "/upload_file",
+            data: file_data,
+            processData: false,
+            contentType: false,
+            async: true,
+            success: function (d1) {
+                if (d1 !== "error") {
+                    $.ajax({
+                        url: "/upload_file/layout",
+                        type: "get",
+                        dataType: "json",
+                        data: {'layout_type': now_layout_type, 'file_path': d1},
+                        async: true,
+                        contentType: "application/json",
+                        success: function (d2) {
+                            now_layout.updateFromOthers(d2);
+                        }
+                    })
+                }
+                else {
+                    alert("上传文件失败，请重新上传！");
+                }
+            },
+            Error: function () {
+                console.log("error");
+            }
+        });
+        $("#uploadFile").val("").change();
     };
 
     ControlChart.prototype.initParameters = function () {

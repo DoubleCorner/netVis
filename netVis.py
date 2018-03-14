@@ -7,6 +7,7 @@ import pandas as pd
 from flask import Flask, request
 from flask import render_template, jsonify
 from igraph import *
+from werkzeug.utils import secure_filename
 
 all_files_data = []
 layout_data = []
@@ -131,6 +132,43 @@ def get_brush_extent_data():
         if not edges['target'] in nodes:
             nodes.append(edges['target'])
             result['nodes'].append({'id': edges['target']})
+    if layout_type != 'force' and layout_type != 'bundle':
+        cal_back_layout_data(nodes, result, layout_type)
+
+    calNetwork.cal_characters_arguments(result, layout_type)
+    return jsonify(result)
+
+
+@app.route('/upload_file', methods=['GET', 'POST'])
+def up_load_file():
+    if request.method == "POST":
+        file_data = request.files['upload']
+        if file_data:
+            upload_path = os.path.join("files/", secure_filename(file_data.filename))
+            file_data.save(upload_path)
+            return upload_path
+        else:
+            return "error"
+
+
+@app.route('/upload_file/layout')
+def up_load_file_layout():
+    layout_type = request.args.get('layout_type')
+    file_path = request.args.get('file_path')
+    nodes = []
+    result = {"nodes": [], "links": []}
+    file_data = csv.DictReader(open(file_path))
+    upload_file_data = []
+    for item in file_data:
+        upload_file_data.append(item)
+    for item in upload_file_data:
+        if not item['source'] in nodes:
+            nodes.append(item['source'])
+            result['nodes'].append({'id': item['source']})
+        if not item['target'] in nodes:
+            nodes.append(item['target'])
+            result['nodes'].append({'id': item['target']})
+    result['links'] = upload_file_data
     if layout_type != 'force' and layout_type != 'bundle':
         cal_back_layout_data(nodes, result, layout_type)
 

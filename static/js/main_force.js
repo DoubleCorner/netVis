@@ -625,7 +625,7 @@ function ForceChart() {
         }
     };
 
-    ForceChart.prototype.updateFromTime = function (d) {
+    ForceChart.prototype.updateFromOthers = function (d) {
         run(d);
     }
 }

@@ -217,7 +217,7 @@ function TimeLineChart() {
             },
             contentType: "application/json",
             success: function (d) {
-                now_layout.updateFromTime(d);
+                now_layout.updateFromOthers(d);
             },
             Error: function () {
                 console.log("error");

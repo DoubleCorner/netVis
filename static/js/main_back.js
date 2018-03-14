@@ -586,7 +586,7 @@ function BackChart() {
         }
     };
 
-    BackChart.prototype.updateFromTime = function (d) {
+    BackChart.prototype.updateFromOthers = function (d) {
         run(d);
     }
 }

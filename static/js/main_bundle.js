@@ -574,7 +574,7 @@ function BundleChart() {
         }
     };
 
-    BundleChart.prototype.updateFromTime = function (d) {
+    BundleChart.prototype.updateFromOthers = function (d) {
         run(d);
     }
 }
