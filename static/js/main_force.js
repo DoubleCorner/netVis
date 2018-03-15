@@ -415,7 +415,6 @@ function ForceChart() {
                 mainChart.mini_translate = d3.transform(mainChart.map_frame.attr("transform")).translate;
             })
             .on("drag", function () {
-                d3.event.sourceEvent.stopImmediatePropagation();
                 mainChart.mini_translate[0] += d3.event.dx;
                 mainChart.mini_translate[1] += d3.event.dy;
                 mainChart.map_frame.attr("transform", "translate(" + mainChart.mini_translate[0] + "," + mainChart.mini_translate[1] + ")");
