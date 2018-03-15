@@ -274,8 +274,8 @@ function BundleChart() {
     }
 
     function drawGraph() {
-        if (mainChart.svg)
-            mainChart.svg.remove();
+        if (mainChart.svg) mainChart.svg.remove();
+        if (mainChart.map_svg) mainChart.map_svg.remove();
 
         mainChart.inner_radius = mainChart.radius - mainChart.padding;
         mainChart.cluster = d3.layout.cluster()

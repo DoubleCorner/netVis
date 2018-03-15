@@ -267,10 +267,8 @@ function ForceChart() {
     }
 
     function drawGraph() {
-        if (mainChart.svg)
-            mainChart.svg.remove();
-        if (mainChart.map_svg)
-            mainChart.map_svg.remove();
+        if (mainChart.svg) mainChart.svg.remove();
+        if (mainChart.map_svg) mainChart.map_svg.remove();
 
         mainChart.svg = d3.select("#main")
             .append("svg")
@@ -430,8 +428,8 @@ function ForceChart() {
     }
 
     function miniMap() {
-        if (mainChart.map_g)
-            mainChart.map_g.remove();
+        if (mainChart.map_g) mainChart.map_g.remove();
+
         mainChart.map_g = mainChart.map_svg.append("g");
         mainChart.map_g.selectAll(".m_links")
             .data(mainChart.links)

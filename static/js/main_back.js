@@ -253,10 +253,9 @@ function BackChart() {
     }
 
     function drawGraph() {
-        if (mainChart.svg)
-            mainChart.svg.remove();
-        if (mainChart.map_svg)
-            mainChart.map_svg.remove();
+        if (mainChart.svg) mainChart.svg.remove();
+        if (mainChart.map_svg) mainChart.map_svg.remove();
+
         mainChart.svg = d3.select("#main")
             .append("svg")
             .attr("width", mainChart.width)
