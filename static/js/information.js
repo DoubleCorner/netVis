@@ -77,8 +77,8 @@ function InfChart() {
         });
 
         obj = {
-            '节点总量': graph.parameters.length,
-            '边总量': edges_number,
+            '节点总量': graph.parameters.length.toString(),
+            '边总量': edges_number.toString(),
             '节点编号': graph.parameters[0].id,
             '度': graph.parameters[0].degree,
             '度中心性': graph.parameters[0].degree_centrality,
@@ -88,7 +88,6 @@ function InfChart() {
             '聚类系数': graph.parameters[0].clustering,
             '特征分布': '特征类别'
         };
-        /*listen 会导致用户无法输入*/
         var gui = new dat.gui.GUI();
         gui.add(obj, '节点总量').listen();
         gui.add(obj, '边总量').listen();
@@ -104,6 +103,8 @@ function InfChart() {
             drawGraph(value);
         });
         document.getElementById('information').appendChild(gui.domElement);
+        /*禁止用户输入*/
+        d3.select("#information").selectAll("input").attr("readonly", "readonly");
     };
 
     InfChart.prototype.update = function (item) {
