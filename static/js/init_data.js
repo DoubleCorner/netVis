@@ -24,9 +24,9 @@ function InitData() {
         }
     });
 
-    // $(window).resize(function () {
-    //     window.location.reload();
-    // });
+    $(window).resize(function () {
+        window.location.reload();
+    });
 
     function currentTime() {
         var date = FormatDateTime((new Date()));
