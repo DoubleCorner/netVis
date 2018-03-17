@@ -7,8 +7,7 @@ function BackChart() {
         svg: null,
         map_svg: null,
         mini_width: 200,
-        mini_border: 2,
-        mini_frame_padding: 10
+        mini_border: 2
     };
     init();
     fresh();
@@ -149,9 +148,7 @@ function BackChart() {
             .attr("transform", function (d) {
                 return "rotate(30," + mainChart.x_scale(d.x) + " " + mainChart.y_scale(d.y) + ")"
             });
-        mainChart.map_frame.attr("transform", "translate(5, 5)")
-            .attr("width", mainChart.mini_width - mainChart.mini_frame_padding)
-            .attr("height", mainChart.mini_height - mainChart.mini_frame_padding);
+        mainChart.map_frame.attr("transform", "translate(0, 0)").attr("width", mainChart.mini_width).attr("height", mainChart.mini_height);
     }
 
     function regionSelect() {
@@ -421,9 +418,8 @@ function BackChart() {
 
         mainChart.map_frame = mainChart.map_svg.append("rect")
             .attr("class", "mini_background")
-            .attr("transform", "translate(5, 5)")
-            .attr("width", mainChart.mini_width - mainChart.mini_frame_padding)
-            .attr("height", mainChart.mini_height - mainChart.mini_frame_padding)
+            .attr("width", mainChart.mini_width)
+            .attr("height", mainChart.mini_height)
             .attr("cursor", "move")
             .call(mainChart.map_drag);
     }

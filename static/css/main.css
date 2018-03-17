@@ -81,8 +81,6 @@
 }
 
 .mini_background {
-    stroke: white;
-    stroke-width: 1;
     fill: white;
     fill-opacity: 0.3;
 }

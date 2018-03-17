@@ -8,7 +8,6 @@ function BundleChart() {
         map_svg: null,
         mini_width: 200,
         mini_border: 2,
-        mini_frame_padding: 10,
         padding: 40
     };
     init();
@@ -175,9 +174,7 @@ function BundleChart() {
         mainChart.zoom.scale(mainChart.scale);
         mainChart.svg_links.attr("stroke-opacity", mainChart.now_link_opacity);
         mainChart.svg_nodes.attr("opacity", mainChart.now_node_opacity);
-        mainChart.map_frame.attr("transform", "translate(5, 5)")
-            .attr("width", mainChart.mini_width - mainChart.mini_frame_padding)
-            .attr("height", mainChart.mini_height - mainChart.mini_frame_padding);
+        mainChart.map_frame.attr("transform", "translate(0, 0)").attr("width", mainChart.mini_width).attr("height", mainChart.mini_height);
     }
 
     function regionSelect() {
@@ -418,9 +415,8 @@ function BundleChart() {
 
         mainChart.map_frame = mainChart.map_svg.append("rect")
             .attr("class", "mini_background")
-            .attr("transform", "translate(5, 5)")
-            .attr("width", mainChart.mini_width - mainChart.mini_frame_padding)
-            .attr("height", mainChart.mini_height - mainChart.mini_frame_padding)
+            .attr("width", mainChart.mini_width)
+            .attr("height", mainChart.mini_height)
             .attr("cursor", "move")
             .call(mainChart.map_drag);
 
