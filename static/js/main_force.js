@@ -337,12 +337,6 @@ function ForceChart() {
             .call(mainChart.drag);
 
         mainChart.nodes_label = mainChart.svg_nodes_g.append("text")
-            .attr("x", function (d) {
-                return d.x;
-            })
-            .attr("y", function (d) {
-                return d.y;
-            })
             .attr("fill", mainChart.now_label_color)
             .attr("font-size", mainChart.now_label_size)
             .attr("opacity", mainChart.now_label_opacity)
