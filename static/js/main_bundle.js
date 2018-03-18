@@ -424,17 +424,17 @@ function BundleChart() {
 
     function nodeMoveOver(d) {
         info_chart.update(d);
-        d3.select(this).attr("fill", OVER_NODE_COLOR);
+        d3.select(this).attr("fill", OVER_COLOR);
         d3.select("#node_" + d.id + " text").attr("visibility", "visible");
         mainChart.result_links.forEach(function (item, j) {
             if (item[0].id === d.id) {
-                d3.select("#link_" + j).attr("stroke", TARGET_NODE_COLOR);
-                d3.select("#node_" + item[2].id + " circle").attr("fill", TARGET_NODE_COLOR);
+                d3.select("#link_" + j).attr("stroke", TARGET_COLOR);
+                d3.select("#node_" + item[2].id + " circle").attr("fill", TARGET_COLOR);
                 d3.select("#node_" + item[2].id + " text").attr("visibility", "visible");
             }
             else if (item[2].id === d.id) {
-                d3.select("#link_" + j).attr("stroke", SOURCE_NODE_COLOR);
-                d3.select("#node_" + item[0].id + " circle").attr("fill", SOURCE_NODE_COLOR);
+                d3.select("#link_" + j).attr("stroke", SOURCE_COLOR);
+                d3.select("#node_" + item[0].id + " circle").attr("fill", SOURCE_COLOR);
                 d3.select("#node_" + item[0].id + " text").attr("visibility", "visible");
             }
         });

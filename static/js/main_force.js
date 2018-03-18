@@ -8,7 +8,8 @@ function ForceChart() {
         distance_value: 20,
         charge_value: -20,
         mini_width: 200,
-        mini_border: 2
+        mini_border: 2,
+        label_show_flag: false
     };
     init();
     fresh();
@@ -300,12 +301,16 @@ function ForceChart() {
             .attr("stroke", mainChart.now_link_color)
             .attr("stroke-width", mainChart.now_link_size);
 
+        //节点可拖动
         mainChart.drag = d3.behavior.drag()
             .on("drag", function (d) {
                 var x = d3.mouse(this)[0];
                 var y = d3.mouse(this)[1];
                 d3.select(this).attr("cx", x).attr("cy", y);
-                d3.select("#node_" + d.id + " text").attr("x", x).attr("y", y);
+                d3.select("#node_" + d.id + " line")
+                    .attr("x1", x).attr("y1", y)
+                    .attr("x2", d3.select("#node_" + d.id + " text").attr("x"))
+                    .attr("y2", d3.select("#node_" + d.id + " text").attr("y"));
                 mainChart.links.forEach(function (t, j) {
                     if (t.source.id === d.id) {
                         d3.select("#link_" + j).attr("x1", x);
@@ -316,6 +321,18 @@ function ForceChart() {
                         d3.select("#link_" + j).attr("y2", y);
                     }
                 })
+            });
+
+        //标签可拖动
+        mainChart.label_drag = d3.behavior.drag()
+            .on("drag", function (d) {
+                var x = d3.mouse(this)[0];
+                var y = d3.mouse(this)[1];
+                d3.select(this).attr("x", x).attr("y", y);
+                d3.select("#node_" + d.id + " line")
+                    .attr("x1", d3.select("#node_" + d.id + " circle").attr("cx"))
+                    .attr("y1", d3.select("#node_" + d.id + " circle").attr("cy"))
+                    .attr("x2", x).attr("y2", y);
             });
 
         mainChart.svg_nodes_g = mainChart.g.selectAll(".nodes")
@@ -333,10 +350,10 @@ function ForceChart() {
             .attr("opacity", mainChart.now_node_opacity)
             .attr("fill", mainChart.now_node_color)
             .attr("stroke", mainChart.now_node_stroke)
-            .attr("stroke-width", NODE_STROKE_WIDTH)
-            .call(mainChart.drag);
+            .attr("stroke-width", NODE_STROKE_WIDTH);
 
         mainChart.nodes_label = mainChart.svg_nodes_g.append("text")
+            .attr("cursor", "default")
             .attr("fill", mainChart.now_label_color)
             .attr("font-size", mainChart.now_label_size)
             .attr("opacity", mainChart.now_label_opacity)
@@ -346,12 +363,21 @@ function ForceChart() {
                 return d.id;
             });
 
+        //添加节点和标签之间的虚线连线（标签可拖动）
+        mainChart.nodes_line_label = mainChart.svg_nodes_g.append("line")
+            .attr("stroke-dasharray", "3, 3")
+            .attr("stroke-opacity", INIT_EDGE_OPACITY)
+            .attr("stroke", INIT_NODE_LABEL_LINE_COLOR)
+            .attr("visibility", "hidden")
+            .attr("stroke-width", INIT_EDGE_SIZE);
+
         mainChart.svg_nodes.on("mouseover", nodeMoveOver);
 
         mainChart.svg_nodes.on("mouseout", nodeMoveOut);
 
         mainChart.force.on("start", function () {
             mainChart.svg_nodes.on(".drag", null);
+            mainChart.nodes_label.on(".drag", null);
             mainChart.map_frame.attr("cursor", "default").on(".drag", null);
         });
 
@@ -381,11 +407,24 @@ function ForceChart() {
             mainChart.nodes_label.attr("y", function (d) {
                 return d.y;
             });
+            mainChart.nodes_line_label.attr("x1", function (d) {
+                return d.x;
+            });
+            mainChart.nodes_line_label.attr("y1", function (d) {
+                return d.y;
+            });
+            mainChart.nodes_line_label.attr("x2", function (d) {
+                return d.x;
+            });
+            mainChart.nodes_line_label.attr("y2", function (d) {
+                return d.y;
+            });
             miniMap();
         });
 
         mainChart.force.on("end", function () {
             mainChart.svg_nodes.call(mainChart.drag);
+            mainChart.nodes_label.call(mainChart.label_drag);
             mainChart.map_frame.attr("cursor", "move").call(mainChart.map_drag);
 
         });
@@ -464,38 +503,52 @@ function ForceChart() {
         return y / mainChart.height * mainChart.mini_height;
     }
 
-    function nodeMoveOut(d) {
-        d3.select(this).attr("fill", mainChart.now_node_color);
-        d3.select("#node_" + d.id + " text").attr("visibility", "hidden");
+    function nodeMoveOver(d) {
+        info_chart.update(d);
+        d3.select(this).attr("fill", OVER_COLOR);
+        d3.select("#node_" + d.id + " text").attr("visibility", "visible").attr("fill", OVER_COLOR);
+        d3.select("#node_" + d.id + " line").attr("visibility", "visible");
         mainChart.links.forEach(function (t, j) {
             if (t.source.id === d.id) {
-                d3.select("#link_" + j).attr("stroke", mainChart.now_link_color);
-                d3.select("#node_" + t.target.id + " circle").attr("fill", mainChart.now_node_color);
-                d3.select("#node_" + t.target.id + " text").attr("visibility", "hidden");
-
+                d3.select("#link_" + j).attr("stroke", TARGET_COLOR);
+                d3.select("#node_" + t.target.id + " circle").attr("fill", TARGET_COLOR);
+                d3.select("#node_" + t.target.id + " text").attr("visibility", "visible").attr("fill", TARGET_COLOR);
+                d3.select("#node_" + t.target.id + " line").attr("visibility", "visible");
             }
             else if (t.target.id === d.id) {
-                d3.select("#link_" + j).attr("stroke", mainChart.now_link_color);
-                d3.select("#node_" + t.source.id + " circle").attr("fill", mainChart.now_node_color);
-                d3.select("#node_" + t.source.id + " text").attr("visibility", "hidden");
+                d3.select("#link_" + j).attr("stroke", SOURCE_COLOR);
+                d3.select("#node_" + t.source.id + " circle").attr("fill", SOURCE_COLOR);
+                d3.select("#node_" + t.source.id + " text").attr("visibility", "visible").attr("fill", SOURCE_COLOR);
+                d3.select("#node_" + t.source.id + " line").attr("visibility", "visible");
             }
         })
     }
 
-    function nodeMoveOver(d) {
-        info_chart.update(d);
-        d3.select(this).attr("fill", OVER_NODE_COLOR);
-        d3.select("#node_" + d.id + " text").attr("visibility", "visible");
+    function nodeMoveOut(d) {
+        d3.select(this).attr("fill", mainChart.now_node_color);
+        d3.select("#node_" + d.id + " text").attr("fill", mainChart.now_label_color);
+        if (!mainChart.label_show_flag) {
+            d3.select("#node_" + d.id + " text").attr("visibility", "hidden");
+            d3.select("#node_" + d.id + " line").attr("visibility", "hidden");
+        }
         mainChart.links.forEach(function (t, j) {
             if (t.source.id === d.id) {
-                d3.select("#link_" + j).attr("stroke", TARGET_NODE_COLOR);
-                d3.select("#node_" + t.target.id + " circle").attr("fill", TARGET_NODE_COLOR);
-                d3.select("#node_" + t.target.id + " text").attr("visibility", "visible");
+                d3.select("#link_" + j).attr("stroke", mainChart.now_link_color);
+                d3.select("#node_" + t.target.id + " circle").attr("fill", mainChart.now_node_color);
+                d3.select("#node_" + t.target.id + " text").attr("fill", mainChart.now_label_color);
+                if (!mainChart.label_show_flag) {
+                    d3.select("#node_" + t.target.id + " text").attr("visibility", "hidden");
+                    d3.select("#node_" + t.target.id + " line").attr("visibility", "hidden");
+                }
             }
             else if (t.target.id === d.id) {
-                d3.select("#link_" + j).attr("stroke", SOURCE_NODE_COLOR);
-                d3.select("#node_" + t.source.id + " circle").attr("fill", SOURCE_NODE_COLOR);
-                d3.select("#node_" + t.source.id + " text").attr("visibility", "visible");
+                d3.select("#link_" + j).attr("stroke", mainChart.now_link_color);
+                d3.select("#node_" + t.source.id + " circle").attr("fill", mainChart.now_node_color);
+                d3.select("#node_" + t.source.id + " text").attr("fill", mainChart.now_label_color);
+                if (!mainChart.label_show_flag) {
+                    d3.select("#node_" + t.source.id + " text").attr("visibility", "hidden");
+                    d3.select("#node_" + t.source.id + " line").attr("visibility", "hidden");
+                }
             }
         })
     }
@@ -566,10 +619,15 @@ function ForceChart() {
     };
 
     ForceChart.prototype.setLabelShow = function (value) {
-        if (value)
+        mainChart.label_show_flag = value;
+        if (mainChart.label_show_flag) {
+            mainChart.nodes_line_label.attr("visibility", "visible");
             mainChart.nodes_label.attr("visibility", "visible");
-        else
+        }
+        else {
+            mainChart.nodes_line_label.attr("visibility", "hidden");
             mainChart.nodes_label.attr("visibility", "hidden");
+        }
     };
 
     ForceChart.prototype.setLabelType = function (value) {

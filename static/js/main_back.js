@@ -7,7 +7,8 @@ function BackChart() {
         svg: null,
         map_svg: null,
         mini_width: 200,
-        mini_border: 2
+        mini_border: 2,
+        label_show_flag: false
     };
     init();
     fresh();
@@ -147,6 +148,19 @@ function BackChart() {
             })
             .attr("transform", function (d) {
                 return "rotate(30," + mainChart.x_scale(d.x) + " " + mainChart.y_scale(d.y) + ")"
+            });
+        mainChart.nodes_line_label
+            .attr("x1", function (d) {
+                return mainChart.x_scale(d.x);
+            })
+            .attr("y1", function (d) {
+                return mainChart.y_scale(d.y);
+            })
+            .attr("x2", function (d) {
+                return mainChart.x_scale(d.x);
+            })
+            .attr("y2", function (d) {
+                return mainChart.y_scale(d.y);
             });
         mainChart.map_frame.attr("transform", "translate(0, 0)").attr("width", mainChart.mini_width).attr("height", mainChart.mini_height);
     }
@@ -290,15 +304,16 @@ function BackChart() {
             .attr("stroke", mainChart.now_link_color)
             .attr("stroke-width", mainChart.now_link_size);
 
+        //节点可拖动
         mainChart.drag = d3.behavior.drag()
             .on("drag", function (d) {
                 var x = d3.mouse(this)[0];
                 var y = d3.mouse(this)[1];
                 d3.select(this).attr("cx", x).attr("cy", y);
-                d3.select("#node_" + d.id + " text")
-                    .attr("x", x)
-                    .attr("y", y)
-                    .attr("transform", "rotate(30," + x + " " + y + ")");
+                d3.select("#node_" + d.id + " line")
+                    .attr("x1", x).attr("y1", y)
+                    .attr("x2", d3.select("#node_" + d.id + " text").attr("x"))
+                    .attr("y2", d3.select("#node_" + d.id + " text").attr("y"));
                 mainChart.links.forEach(function (t, j) {
                     if (t.source === d.id) {
                         d3.select("#link_" + j).attr("x1", x);
@@ -309,6 +324,21 @@ function BackChart() {
                         d3.select("#link_" + j).attr("y2", y);
                     }
                 })
+            });
+
+        //标签可拖动
+        mainChart.label_drag = d3.behavior.drag()
+            .on("drag", function (d) {
+                var x = d3.mouse(this)[0];
+                var y = d3.mouse(this)[1];
+                d3.select(this)
+                    .attr("x", x)
+                    .attr("y", y)
+                    .attr("transform", "rotate(30," + x + " " + y + ")");
+                d3.select("#node_" + d.id + " line")
+                    .attr("x1", d3.select("#node_" + d.id + " circle").attr("cx"))
+                    .attr("y1", d3.select("#node_" + d.id + " circle").attr("cy"))
+                    .attr("x2", x).attr("y2", y);
             });
 
         mainChart.svg_nodes_g = mainChart.g.selectAll(".nodes")
@@ -345,6 +375,7 @@ function BackChart() {
             .attr("transform", function (d) {
                 return "rotate(30," + mainChart.x_scale(d.x) + " " + mainChart.y_scale(d.y) + ")"
             })
+            .attr("cursor", "default")
             .attr("fill", mainChart.now_label_color)
             .attr("font-size", mainChart.now_label_size)
             .attr("opacity", mainChart.now_label_opacity)
@@ -352,6 +383,27 @@ function BackChart() {
             .attr("font-family", "sans-serif")
             .text(function (d) {
                 return d.id;
+            })
+            .call(mainChart.label_drag);
+
+        //添加节点和标签之间的虚线连线（标签可拖动）
+        mainChart.nodes_line_label = mainChart.svg_nodes_g.append("line")
+            .attr("stroke-dasharray", "3, 3")
+            .attr("stroke-opacity", INIT_EDGE_OPACITY)
+            .attr("stroke", INIT_NODE_LABEL_LINE_COLOR)
+            .attr("stroke-width", INIT_EDGE_SIZE)
+            .attr("visibility", "hidden")
+            .attr("x1", function (d) {
+                return mainChart.x_scale(d.x);
+            })
+            .attr("y1", function (d) {
+                return mainChart.y_scale(d.y);
+            })
+            .attr("x2", function (d) {
+                return mainChart.x_scale(d.x);
+            })
+            .attr("y2", function (d) {
+                return mainChart.y_scale(d.y);
             });
 
         mainChart.svg_nodes.on("mouseover", nodeMoveOver);
@@ -434,36 +486,51 @@ function BackChart() {
 
     function nodeMoveOver(d) {
         info_chart.update(d);
-        d3.select(this).attr("fill", OVER_NODE_COLOR);
-        d3.select("#node_" + d.id + " text").attr("visibility", "visible");
+        d3.select(this).attr("fill", OVER_COLOR);
+        d3.select("#node_" + d.id + " text").attr("visibility", "visible").attr("fill", OVER_COLOR);
+        d3.select("#node_" + d.id + " line").attr("visibility", "visible");
         mainChart.links.forEach(function (t, j) {
             if (t.source === d.id) {
-                d3.select("#link_" + j).attr("stroke", TARGET_NODE_COLOR);
-                d3.select("#node_" + t.target + " circle").attr("fill", TARGET_NODE_COLOR);
-                d3.select("#node_" + t.target + " text").attr("visibility", "visible");
+                d3.select("#link_" + j).attr("stroke", TARGET_COLOR);
+                d3.select("#node_" + t.target + " circle").attr("fill", TARGET_COLOR);
+                d3.select("#node_" + t.target + " text").attr("visibility", "visible").attr("fill", TARGET_COLOR);
+                d3.select("#node_" + t.target + " line").attr("visibility", "visible");
             }
             else if (t.target === d.id) {
-                d3.select("#link_" + j).attr("stroke", SOURCE_NODE_COLOR);
-                d3.select("#node_" + t.source + " circle").attr("fill", SOURCE_NODE_COLOR);
-                d3.select("#node_" + t.source + " text").attr("visibility", "visible");
+                d3.select("#link_" + j).attr("stroke", SOURCE_COLOR);
+                d3.select("#node_" + t.source + " circle").attr("fill", SOURCE_COLOR);
+                d3.select("#node_" + t.source + " text").attr("visibility", "visible").attr("fill", SOURCE_COLOR);
+                d3.select("#node_" + t.source + " line").attr("visibility", "visible");
             }
         })
     }
 
     function nodeMoveOut(d) {
         d3.select(this).attr("fill", mainChart.now_node_color);
-        d3.select("#node_" + d.id + " text").attr("visibility", "hidden");
+        d3.select("#node_" + d.id + " text").attr("fill", mainChart.now_label_color);
+        if (!mainChart.label_show_flag) {
+            d3.select("#node_" + d.id + " text").attr("visibility", "hidden");
+            d3.select("#node_" + d.id + " line").attr("visibility", "hidden");
+        }
         mainChart.links.forEach(function (t, j) {
             if (t.source === d.id) {
                 d3.select("#link_" + j).attr("stroke", mainChart.now_link_color);
                 d3.select("#node_" + t.target + " circle").attr("fill", mainChart.now_node_color);
-                d3.select("#node_" + t.target + " text").attr("visibility", "hidden");
+                d3.select("#node_" + t.target + " text").attr("fill", mainChart.now_label_color);
+                if (!mainChart.label_show_flag) {
+                    d3.select("#node_" + t.target + " text").attr("visibility", "hidden");
+                    d3.select("#node_" + t.target + " line").attr("visibility", "hidden");
+                }
 
             }
             else if (t.target === d.id) {
                 d3.select("#link_" + j).attr("stroke", mainChart.now_link_color);
                 d3.select("#node_" + t.source + " circle").attr("fill", mainChart.now_node_color);
-                d3.select("#node_" + t.source + " text").attr("visibility", "hidden");
+                d3.select("#node_" + t.source + " text").attr("fill", mainChart.now_label_color);
+                if (!mainChart.label_show_flag) {
+                    d3.select("#node_" + t.source + " text").attr("visibility", "hidden");
+                    d3.select("#node_" + t.source + " line").attr("visibility", "hidden");
+                }
             }
         })
     }
@@ -534,10 +601,15 @@ function BackChart() {
     };
 
     BackChart.prototype.setLabelShow = function (value) {
-        if (value)
+        mainChart.label_show_flag = value;
+        if (mainChart.label_show_flag) {
+            mainChart.nodes_line_label.attr("visibility", "visible");
             mainChart.nodes_label.attr("visibility", "visible");
-        else
+        }
+        else {
+            mainChart.nodes_line_label.attr("visibility", "hidden");
             mainChart.nodes_label.attr("visibility", "hidden");
+        }
     };
 
     BackChart.prototype.setLabelType = function (value) {
