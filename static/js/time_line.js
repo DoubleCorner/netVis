@@ -194,7 +194,6 @@ function TimeLineChart() {
             timeChart.brush(timeChart.g_brush.transition());
             timeChart.brush.event(timeChart.g_brush.transition().delay(500));
             var packages = (timeChart.brush_extent[1].getTime() - timeChart.brush_extent[0].getTime()) / (1000 * 60 * TIME_INTERVAL);
-            console.log(packages);
             if (packages > MAX_PACKAGES) {
                 alert("请选择小于等于10的包数！");
                 clearBrush();
