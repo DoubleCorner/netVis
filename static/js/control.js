@@ -1,6 +1,6 @@
 function ControlChart() {
     var obj = {
-        '节点尺寸增量': INIT_NODE_SIZE,
+        '节点尺寸': INIT_NODE_SIZE,
         '节点边线': INIT_NODE_STROKE,
         '节点填充': INIT_NODE_COLOR,
         '节点透明度': INIT_NODE_OPACITY,
@@ -33,7 +33,7 @@ function ControlChart() {
 
     var f1 = gui.addFolder('节点');
     var node_stroke = f1.addColor(obj, '节点边线');
-    var node_size = f1.add(obj, '节点尺寸增量').min(0).max(5).step(1);
+    var node_size = f1.add(obj, '节点尺寸').min(3).max(15).step(1);
     var node_color = f1.addColor(obj, '节点填充');
     var node_opacity = f1.add(obj, '节点透明度').min(0).max(1).step(0.05);
     /*节点信息监听*/
@@ -237,6 +237,6 @@ var INIT_LABEL_OPACITY = 1;
 var INIT_NODE_LABEL_LINE_COLOR = "#FFC125";
 var MINI_NODE_SIZE = 1;
 var LOW_MAIN_OPACITY = 0.2;
-var R_RANGE = [3, 15];
+var R_RANGE = [2, 15];
 var SCALE_EXTENT = [0.5, 128];
 var control_chart = new ControlChart();

@@ -260,7 +260,7 @@ function ForceChart() {
         });
 
         mainChart.r_scale = d3.scale.linear().domain(d3.extent(mainChart.nodes, function (d) {
-            return +d.degree;
+            return +d.size;
         })).range(R_RANGE);
     }
 
@@ -345,10 +345,12 @@ function ForceChart() {
 
         mainChart.svg_nodes = mainChart.svg_nodes_g.append("circle")
             .attr("r", function (d) {
-                return mainChart.r_scale(+d.degree);
+                return mainChart.r_scale(+d.size);
             })
             .attr("opacity", mainChart.now_node_opacity)
-            .attr("fill", mainChart.now_node_color)
+            .attr("fill", function (d) {
+                return d.color;
+            })
             .attr("stroke", mainChart.now_node_stroke)
             .attr("stroke-width", NODE_STROKE_WIDTH);
 
@@ -374,6 +376,8 @@ function ForceChart() {
         mainChart.svg_nodes.on("mouseover", nodeMoveOver);
 
         mainChart.svg_nodes.on("mouseout", nodeMoveOut);
+
+        mainChart.svg_nodes.on("click",nodeClick);
 
         mainChart.force.on("start", function () {
             mainChart.svg_nodes.on(".drag", null);
@@ -503,8 +507,11 @@ function ForceChart() {
         return y / mainChart.height * mainChart.mini_height;
     }
 
-    function nodeMoveOver(d) {
+    function nodeClick(d) {
         info_chart.update(d);
+    }
+
+    function nodeMoveOver(d) {
         d3.select(this).attr("fill", OVER_COLOR);
         d3.select("#node_" + d.id + " text").attr("visibility", "visible").attr("fill", OVER_COLOR);
         d3.select("#node_" + d.id + " line").attr("visibility", "visible");
@@ -568,7 +575,7 @@ function ForceChart() {
 
     ForceChart.prototype.setNodeSize = function (nodeSize) {
         mainChart.svg_nodes.attr("r", function (d) {
-            return mainChart.r_scale(d.degree) + nodeSize;
+            return nodeSize;
         });
         mainChart.now_node_size = nodeSize;
     };

@@ -4,7 +4,11 @@ function InfTable() {
     var table_data = null;
     var columns = [
         {checkbox: true},
-        {field: "id", title: "节点编号"},
+        {field: "id", title: "编号"},
+        {field: "continuous", title: "连续属性"},
+        {field: "discrete", title: "离散属性"},
+        {field: "port", title: "端口"},
+        {field: "size", title: "尺寸"},
         {field: "degree", title: "度", sortable: true},
         {field: "degree_centrality", title: "度中心性", sortable: true},
         {field: "closeness_centrality", title: "接近中心性", sortable: true},

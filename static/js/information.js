@@ -7,7 +7,7 @@ function InfChart() {
     var list_container = d3.select("#information")
         .append("div")
         .attr("id", "list_container")
-        .style("height", $("#information").height() - 290 + "px");
+        .style("height", $("#information").height() - 371 + "px");
     var width = $("#list_container").width();
     var sub_width = width - 10;
     var sub_height = 100;
@@ -64,11 +64,39 @@ function InfChart() {
                 "flag": false,
                 "select_data": [],
                 "brush": d3.svg.brush().x(x_scale)
+            },
+            "continuous": {
+                "data": [],
+                "flag": false,
+                "select_data": [],
+                "brush": d3.svg.brush().x(x_scale)
+            },
+            "discrete": {
+                "data": [],
+                "flag": false,
+                "select_data": [],
+                "brush": d3.svg.brush().x(x_scale)
+            },
+            "size": {
+                "data": [],
+                "flag": false,
+                "select_data": [],
+                "brush": d3.svg.brush().x(x_scale)
+            },
+            "port": {
+                "data": [],
+                "flag": false,
+                "select_data": [],
+                "brush": d3.svg.brush().x(x_scale)
             }
         };
 
         graph.parameters.forEach(function (item) {
             item_list.degree.data.push(+item.degree);
+            item_list.continuous.data.push(+item.continuous);
+            item_list.discrete.data.push(+item.discrete);
+            item_list.size.data.push(+item.size);
+            item_list.port.data.push(+item.port);
             item_list.degree_centrality.data.push(+item.degree_centrality);
             item_list.closeness_centrality.data.push(+item.closeness_centrality);
             item_list.betweness_centrality.data.push(+item.betweness_centrality);
@@ -80,25 +108,31 @@ function InfChart() {
             '节点总量': graph.parameters.length.toString(),
             '边总量': edges_number.toString(),
             '节点编号': graph.parameters[0].id,
+            '连续属性': graph.parameters[0].continuous,
+            '离散属性': graph.parameters[0].discrete,
+            '节点端口': graph.parameters[0].port,
             '度': graph.parameters[0].degree,
             '度中心性': graph.parameters[0].degree_centrality,
             '接近中心性': graph.parameters[0].closeness_centrality,
             '介数中心性': graph.parameters[0].betweness_centrality,
             '特征向量中心性': graph.parameters[0].eigenvector_centrality,
             '聚类系数': graph.parameters[0].clustering,
-            '特征分布': '特征类别'
+            '特征分布': '特征类别——所有节点'
         };
         var gui = new dat.gui.GUI();
         gui.add(obj, '节点总量').listen();
         gui.add(obj, '边总量').listen();
         gui.add(obj, '节点编号').listen();
+        gui.add(obj, '连续属性').listen();
+        gui.add(obj, '离散属性').listen();
+        gui.add(obj, '节点端口').listen();
         gui.add(obj, '度').listen();
         gui.add(obj, '度中心性').listen();
         gui.add(obj, '接近中心性').listen();
         gui.add(obj, '介数中心性').listen();
         gui.add(obj, '特征向量中心性').listen();
         gui.add(obj, '聚类系数').listen();
-        var feature = gui.add(obj, '特征分布', ['特征类别', '所有节点度', '所有节点度中心性', '所有节点接近中心性', '所有节点介数中心性', '所有节点特征向量中心性', '所有节点聚类系数']);
+        var feature = gui.add(obj, '特征分布', ['特征类别——所有节点', '度分布', '度中心性分布', '接近中心性分布', '介数中心性分布', '特征向量中心性分布', '聚类系数分布', '尺寸分布', '端口分布', '连续属性分布', '离散属性分布']);
         feature.onChange(function (value) {
             drawGraph(value);
         });
@@ -110,6 +144,9 @@ function InfChart() {
     InfChart.prototype.update = function (item) {
         obj.节点编号 = item.id;
         obj.度 = item.degree;
+        obj.连续属性 = item.continuous;
+        obj.离散属性 = item.discrete;
+        obj.节点端口 = item.port;
         obj.度中心性 = item.degree_centrality;
         obj.接近中心性 = item.closeness_centrality;
         obj.介数中心性 = item.betweness_centrality;
@@ -120,7 +157,7 @@ function InfChart() {
     function drawGraph(type) {
         var item_div;
         switch (type) {
-            case "所有节点度":
+            case "度分布":
                 if (!item_list.degree.flag) {
                     item_div = list_container.append("div").attr("class", "item_div").attr("id", "info_degree");
                     item_div.append("img")
@@ -149,7 +186,7 @@ function InfChart() {
                     drawOneGraph(item_list.degree.data, "info_degree", "度");
                 }
                 break;
-            case "所有节点度中心性":
+            case "度中心性分布":
                 if (!item_list.degree_centrality.flag) {
                     item_div = list_container.append("div").attr("class", "item_div").attr("id", "info_degree_centrality");
                     item_div.append("img")
@@ -178,7 +215,7 @@ function InfChart() {
                     drawOneGraph(item_list.degree_centrality.data, "info_degree_centrality", "度中心性");
                 }
                 break;
-            case  "所有节点接近中心性":
+            case  "接近中心性分布":
                 if (!item_list.closeness_centrality.flag) {
                     item_div = list_container.append("div").attr("class", "item_div").attr("id", "info_closeness_centrality");
                     item_div.append("img")
@@ -207,7 +244,7 @@ function InfChart() {
                     drawOneGraph(item_list.closeness_centrality.data, "info_closeness_centrality", "接近中心性");
                 }
                 break;
-            case  "所有节点介数中心性":
+            case  "介数中心性分布":
                 if (!item_list.betweness_centrality.flag) {
                     item_div = list_container.append("div").attr("class", "item_div").attr("id", "info_betweness_centrality");
                     item_div.append("img")
@@ -236,7 +273,7 @@ function InfChart() {
                     drawOneGraph(item_list.betweness_centrality.data, "info_betweness_centrality", "介数中心性");
                 }
                 break;
-            case  "所有节点特征向量中心性":
+            case  "特征向量中心性分布":
                 if (!item_list.eigenvector_centrality.flag) {
                     item_div = list_container.append("div").attr("class", "item_div").attr("id", "info_eigenvector_centrality");
                     item_div.append("img")
@@ -265,7 +302,7 @@ function InfChart() {
                     drawOneGraph(item_list.eigenvector_centrality.data, "info_eigenvector_centrality", "特征向量中心性");
                 }
                 break;
-            case "所有节点聚类系数":
+            case "聚类系数分布":
                 if (!item_list.clustering.flag) {
                     item_div = list_container.append("div").attr("class", "item_div").attr("id", "info_clustering");
                     item_div.append("img")
@@ -294,6 +331,123 @@ function InfChart() {
                     drawOneGraph(item_list.clustering.data, "info_clustering", "聚类系数");
                 }
                 break;
+            case "端口分布":
+                if (!item_list.port.flag) {
+                    item_div = list_container.append("div").attr("class", "item_div").attr("id", "info_port");
+                    item_div.append("img")
+                        .attr("class", "info_close")
+                        .attr("src", "../static/img/close.png")
+                        .attr("title", "关闭")
+                        .on("click", function () {
+                            item_div.remove();
+                            item_list.port.flag = false;
+                            item_list.port.select_data = [];
+                            item_list.port.brush.clear();
+                            restore();
+                        });
+                    item_div.append("img")
+                        .attr("class", "info_trash")
+                        .attr("src", "../static/img/eraser.png")
+                        .attr("title", "清空选定")
+                        .on("click", function () {
+                            if (!item_list.port.brush.empty()) {
+                                item_list.port.brush.clear();
+                                item_list.port.brush(d3.select(".brush." + "info_port").transition());
+                                item_list.port.brush.event(d3.select(".brush." + "info_port").transition().delay(500));
+                            }
+                        });
+                    item_list.port.flag = true;
+                    drawOneGraph(item_list.port.data, "info_port", "端口");
+                }
+                break;
+            case "连续属性分布":
+                if (!item_list.continuous.flag) {
+                    item_div = list_container.append("div").attr("class", "item_div").attr("id", "info_continuous");
+                    item_div.append("img")
+                        .attr("class", "info_close")
+                        .attr("src", "../static/img/close.png")
+                        .attr("title", "关闭")
+                        .on("click", function () {
+                            item_div.remove();
+                            item_list.continuous.flag = false;
+                            item_list.continuous.select_data = [];
+                            item_list.continuous.brush.clear();
+                            restore();
+                        });
+                    item_div.append("img")
+                        .attr("class", "info_trash")
+                        .attr("src", "../static/img/eraser.png")
+                        .attr("title", "清空选定")
+                        .on("click", function () {
+                            if (!item_list.continuous.brush.empty()) {
+                                item_list.continuous.brush.clear();
+                                item_list.continuous.brush(d3.select(".brush." + "info_continuous").transition());
+                                item_list.continuous.brush.event(d3.select(".brush." + "info_continuous").transition().delay(500));
+                            }
+                        });
+                    item_list.continuous.flag = true;
+                    drawOneGraph(item_list.continuous.data, "info_continuous", "连续属性");
+                }
+                break;
+            case "离散属性分布":
+                if (!item_list.discrete.flag) {
+                    item_div = list_container.append("div").attr("class", "item_div").attr("id", "info_discrete");
+                    item_div.append("img")
+                        .attr("class", "info_close")
+                        .attr("src", "../static/img/close.png")
+                        .attr("title", "关闭")
+                        .on("click", function () {
+                            item_div.remove();
+                            item_list.discrete.flag = false;
+                            item_list.discrete.select_data = [];
+                            item_list.discrete.brush.clear();
+                            restore();
+                        });
+                    item_div.append("img")
+                        .attr("class", "info_trash")
+                        .attr("src", "../static/img/eraser.png")
+                        .attr("title", "清空选定")
+                        .on("click", function () {
+                            if (!item_list.discrete.brush.empty()) {
+                                item_list.discrete.brush.clear();
+                                item_list.discrete.brush(d3.select(".brush." + "info_discrete").transition());
+                                item_list.discrete.brush.event(d3.select(".brush." + "info_discrete").transition().delay(500));
+                            }
+                        });
+                    item_list.discrete.flag = true;
+                    drawOneGraph(item_list.discrete.data, "info_discrete", "离散属性");
+                }
+                break;
+            case "尺寸分布":
+                if (!item_list.size.flag) {
+                    item_div = list_container.append("div").attr("class", "item_div").attr("id", "info_size");
+                    item_div.append("img")
+                        .attr("class", "info_close")
+                        .attr("src", "../static/img/close.png")
+                        .attr("title", "关闭")
+                        .on("click", function () {
+                            item_div.remove();
+                            item_list.size.flag = false;
+                            item_list.size.select_data = [];
+                            item_list.size.brush.clear();
+                            restore();
+                        });
+                    item_div.append("img")
+                        .attr("class", "info_trash")
+                        .attr("src", "../static/img/eraser.png")
+                        .attr("title", "清空选定")
+                        .on("click", function () {
+                            if (!item_list.size.brush.empty()) {
+                                item_list.size.brush.clear();
+                                item_list.size.brush(d3.select(".brush." + "info_size").transition());
+                                item_list.size.brush.event(d3.select(".brush." + "info_size").transition().delay(500));
+                            }
+                        });
+                    item_list.size.flag = true;
+                    drawOneGraph(item_list.size.data, "info_size", "尺寸");
+                }
+                break;
+
         }
     }
 
@@ -356,6 +510,18 @@ function InfChart() {
                 break;
             case "info_clustering":
                 now_brush = item_list.clustering.brush;
+                break;
+            case "info_size":
+                now_brush = item_list.size.brush;
+                break;
+            case "info_port":
+                now_brush = item_list.port.brush;
+                break;
+            case  "info_discrete":
+                now_brush = item_list.discrete.brush;
+                break;
+            case  "info_continuous":
+                now_brush = item_list.continuous.brush;
                 break;
         }
         now_brush.on("brushend", brushEnd);
@@ -429,6 +595,42 @@ function InfChart() {
                             });
                             tip_label.text("数量：" + item_list.clustering.select_data.length + " 范围：" + true_range[0].toExponential(2) + " ~ " + true_range[1].toExponential(2));
                             break;
+                        case  "info_size":
+                            item_list.size.select_data = [];
+                            graph.parameters.forEach(function (value) {
+                                if (value.size >= error_range[0] && value.size <= error_range[1]) {
+                                    item_list.size.select_data.push(value.id);
+                                }
+                            });
+                            tip_label.text("数量：" + item_list.size.select_data.length + " 范围：" + true_range[0].toExponential(1) + " ~ " + true_range[1].toExponential(1));
+                            break;
+                        case  "info_port":
+                            item_list.port.select_data = [];
+                            graph.parameters.forEach(function (value) {
+                                if (value.port >= error_range[0] && value.port <= error_range[1]) {
+                                    item_list.port.select_data.push(value.id);
+                                }
+                            });
+                            tip_label.text("数量：" + item_list.port.select_data.length + " 范围：" + Math.ceil(true_range[0]) + " ~ " + Math.floor(true_range[1]));
+                            break;
+                        case  "info_continuous":
+                            item_list.continuous.select_data = [];
+                            graph.parameters.forEach(function (value) {
+                                if (value.continuous >= error_range[0] && value.continuous <= error_range[1]) {
+                                    item_list.continuous.select_data.push(value.id);
+                                }
+                            });
+                            tip_label.text("数量：" + item_list.continuous.select_data.length + " 范围：" + Math.ceil(true_range[0]) + " ~ " + Math.floor(true_range[1]));
+                            break;
+                        case "info_discrete":
+                            item_list.discrete.select_data = [];
+                            graph.parameters.forEach(function (value) {
+                                if (value.discrete >= error_range[0] && value.discrete <= error_range[1]) {
+                                    item_list.discrete.select_data.push(value.id);
+                                }
+                            });
+                            tip_label.text("数量：" + item_list.discrete.select_data.length + " 范围：" + Math.ceil(true_range[0]) + " ~ " + Math.floor(true_range[1]));
+                            break;
                     }
                 }
                 else {
@@ -451,6 +653,18 @@ function InfChart() {
                         case "info_clustering":
                             item_list.clustering.select_data = [];
                             break;
+                        case "info_size":
+                            item_list.size.select_data = [];
+                            break;
+                        case "info_port":
+                            item_list.port.select_data = [];
+                            break;
+                        case  "info_continuous":
+                            item_list.continuous.select_data = [];
+                            break;
+                        case  "info_discrete":
+                            item_list.discrete.select_data = [];
+                            break;
                     }
                     tip_label.text("");
                 }
@@ -468,7 +682,11 @@ function InfChart() {
             && item_list.clustering.brush.empty()
             && item_list.closeness_centrality.brush.empty()
             && item_list.eigenvector_centrality.brush.empty()
-            && item_list.betweness_centrality.brush.empty()) {
+            && item_list.betweness_centrality.brush.empty()
+            && item_list.size.brush.empty()
+            && item_list.port.brush.empty()
+            && item_list.continuous.brush.empty()
+            && item_list.discrete.brush.empty()) {
             info_table.restore();
             now_layout.restore();
         }
@@ -478,7 +696,11 @@ function InfChart() {
                 .concat(item_list.closeness_centrality.select_data)
                 .concat(item_list.betweness_centrality.select_data)
                 .concat(item_list.eigenvector_centrality.select_data)
-                .concat(item_list.clustering.select_data);
+                .concat(item_list.clustering.select_data)
+                .concat(item_list.size.select_data)
+                .concat(item_list.port.select_data)
+                .concat(item_list.continuous.select_data)
+                .concat(item_list.discrete.select_data);
             var result = d3.set(multiple_result).values();
             info_table.update(result);
             now_layout.update(result);
