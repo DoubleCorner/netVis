@@ -1,6 +1,7 @@
 # coding=utf-8
 import csv
 import json
+import copy
 import calNetwork
 
 import pandas as pd
@@ -10,7 +11,7 @@ from igraph import *
 from werkzeug.utils import secure_filename
 
 all_files_data = []
-layout_data = []
+layout_data = {}
 time_data = []
 
 app = Flask(__name__)
@@ -32,9 +33,9 @@ def read_packages():
     for item in file_data:
         time_data.append(item)
 
-    file_data = csv.DictReader(open('files/small-443nodes-476edges.csv'))
-    for item in file_data:
-        layout_data.append(item)
+    file_data = json.load(open('files/small-443nodes-476edges.json'))
+    layout_data['nodes'] = file_data['nodes']
+    layout_data['links'] = file_data['links']
 
 
 @app.route('/')
@@ -50,17 +51,7 @@ def get_initial_data():
 @app.route('/front_layout')
 def get_front_layout_data():
     layout_type = request.args.get('layout_type')
-    result = {"nodes": [], "links": []}
-    nodes = []
-    for item in layout_data:
-        if not item['source'] in nodes:
-            nodes.append(item['source'])
-            result['nodes'].append({'id': item['source']})
-        if not item['target'] in nodes:
-            nodes.append(item['target'])
-            result['nodes'].append({'id': item['target']})
-    result['links'] = layout_data
-
+    result = copy.deepcopy(layout_data)
     calNetwork.cal_characters_arguments(result, layout_type)
     return jsonify(result)
 
@@ -68,39 +59,37 @@ def get_front_layout_data():
 @app.route('/back_layout')
 def get_back_layout_data():
     layout_type = request.args.get('layout_type')
+    result = copy.deepcopy(layout_data)
     nodes = []
-    result = {"nodes": [], "links": []}
     links = []
-    for item in layout_data:
-        if not item['source'] in nodes:
-            nodes.append(item['source'])
-        if not item['target'] in nodes:
-            nodes.append(item['target'])
 
-    for item in layout_data:
-        source = nodes.index(item['source'])
-        target = nodes.index(item['target'])
-        link = (source, target)
-        links.append(link)
+    for node in result['nodes']:
+            nodes.append(node['id'])
+    for link in result['links']:
+        source = nodes.index(link['source'])
+        target = nodes.index(link['target'])
+        links.append((source, target))
 
     graph = Graph()
     graph.add_vertices(len(nodes))
     graph.add_edges(links)
     lay = graph.layout(layout_type)
-    for i, row in enumerate(lay):
-        node = {'id': nodes[i], 'x': row[0], 'y': row[1]}
-        result['nodes'].append(node)
 
-    for item in layout_data:
-        edge = {'source': item['source'], 'target': item['target']}
+    for node in result['nodes']:
+        for i, row in enumerate(lay):
+            if nodes[i] == node['id']:
+                node['x'] = row[0]
+                node['y'] = row[1]
+                break
+
+    for link in result['links']:
         for node in result['nodes']:
-            if item['source'] == node['id']:
-                edge['x1'] = node['x']
-                edge['y1'] = node['y']
-            if item['target'] == node['id']:
-                edge['x2'] = node['x']
-                edge['y2'] = node['y']
-        result['links'].append(edge)
+            if link['source'] == node['id']:
+                link['x1'] = node['x']
+                link['y1'] = node['y']
+            if link['target'] == node['id']:
+                link['x2'] = node['x']
+                link['y2'] = node['y']
 
     calNetwork.cal_characters_arguments(result, layout_type)
     return jsonify(result)
@@ -110,7 +99,7 @@ def get_back_layout_data():
 def get_brush_extent_data():
     flag = False
     nodes = []
-    result = {"nodes": [], "links": []}
+    result = {'nodes': [], 'links': []}
     start_time = request.args.get('start')
     end_time = request.args.get('end')
     layout_type = request.args.get('layout_type')
@@ -141,14 +130,14 @@ def get_brush_extent_data():
 
 @app.route('/upload_file', methods=['GET', 'POST'])
 def up_load_file():
-    if request.method == "POST":
+    if request.method == 'POST':
         file_data = request.files['upload']
         if file_data:
-            upload_path = os.path.join("files/", secure_filename(file_data.filename))
+            upload_path = os.path.join('files/', secure_filename(file_data.filename))
             file_data.save(upload_path)
             return upload_path
         else:
-            return "error"
+            return 'error'
 
 
 @app.route('/upload_file/layout')
@@ -156,7 +145,7 @@ def up_load_file_layout():
     layout_type = request.args.get('layout_type')
     file_path = request.args.get('file_path')
     nodes = []
-    result = {"nodes": [], "links": []}
+    result = {'nodes': [], 'links': []}
     file_data = csv.DictReader(open(file_path))
     upload_file_data = []
     for item in file_data:

@@ -9001,7 +9001,7 @@
       "size": "5.2"
     }
   ],
-  "edges": [
+  "links": [
     {
       "target": "1",
       "weight": "5",

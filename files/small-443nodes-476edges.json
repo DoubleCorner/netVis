@@ -3988,7 +3988,7 @@
       "size": "1.0"
     }
   ],
-  "edges": [
+  "links": [
     {
       "target": "18",
       "weight": "7",

@@ -27361,7 +27361,7 @@
       "size": "6.8"
     }
   ],
-  "edges": [
+  "links": [
     {
       "target": "wxite_pymp",
       "weight": "4",
