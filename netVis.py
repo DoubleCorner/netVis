@@ -38,6 +38,38 @@ def read_packages():
     layout_data['links'] = file_data['links']
 
 
+def cal_back_layout_data(result, layout_type):
+    nodes = []
+    links = []
+    for node in result['nodes']:
+        nodes.append(node['id'])
+    for link in result['links']:
+        source = nodes.index(link['source'])
+        target = nodes.index(link['target'])
+        links.append((source, target))
+
+    graph = Graph()
+    graph.add_vertices(len(nodes))
+    graph.add_edges(links)
+    lay = graph.layout(layout_type)
+
+    for node in result['nodes']:
+        for i, row in enumerate(lay):
+            if nodes[i] == node['id']:
+                node['x'] = row[0]
+                node['y'] = row[1]
+                break
+
+    for link in result['links']:
+        for node in result['nodes']:
+            if link['source'] == node['id']:
+                link['x1'] = node['x']
+                link['y1'] = node['y']
+            if link['target'] == node['id']:
+                link['x2'] = node['x']
+                link['y2'] = node['y']
+
+
 @app.route('/')
 def index():
     return render_template('index.html')
@@ -52,7 +84,7 @@ def get_initial_data():
 def get_front_layout_data():
     layout_type = request.args.get('layout_type')
     result = copy.deepcopy(layout_data)
-    calNetwork.cal_characters_arguments(result, layout_type)
+    calNetwork.cal_characters_arguments(result)
     return jsonify(result)
 
 
@@ -61,7 +93,7 @@ def get_back_layout_data():
     layout_type = request.args.get('layout_type')
     result = copy.deepcopy(layout_data)
     cal_back_layout_data(result, layout_type)
-    calNetwork.cal_characters_arguments(result, layout_type)
+    calNetwork.cal_characters_arguments(result)
     return jsonify(result)
 
 
@@ -94,7 +126,7 @@ def get_brush_extent_data():
     if layout_type != 'force' and layout_type != 'bundle':
         cal_back_layout_data(result, layout_type)
 
-    calNetwork.cal_characters_arguments(result, layout_type)
+    calNetwork.cal_characters_arguments(result)
     return jsonify(result)
 
 
@@ -124,38 +156,6 @@ def up_load_file_layout():
 
     calNetwork.cal_characters_arguments(result, layout_type)
     return jsonify(result)
-
-
-def cal_back_layout_data(result, layout_type):
-    nodes = []
-    links = []
-    for node in result['nodes']:
-        nodes.append(node['id'])
-    for link in result['links']:
-        source = nodes.index(link['source'])
-        target = nodes.index(link['target'])
-        links.append((source, target))
-
-    graph = Graph()
-    graph.add_vertices(len(nodes))
-    graph.add_edges(links)
-    lay = graph.layout(layout_type)
-
-    for node in result['nodes']:
-        for i, row in enumerate(lay):
-            if nodes[i] == node['id']:
-                node['x'] = row[0]
-                node['y'] = row[1]
-                break
-
-    for link in result['links']:
-        for node in result['nodes']:
-            if link['source'] == node['id']:
-                link['x1'] = node['x']
-                link['y1'] = node['y']
-            if link['target'] == node['id']:
-                link['x2'] = node['x']
-                link['y2'] = node['y']
 
 
 if __name__ == '__main__':

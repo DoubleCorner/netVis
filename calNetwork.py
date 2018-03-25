@@ -40,12 +40,12 @@ def my_round(f):
     return round_result
 
 
-def cal_characters_arguments(result, layout_type):
+def cal_characters_arguments(result):
     """计算传入的result的特征参数"""
     graph = nx.DiGraph()
     # 创建图
-    for edge in result['links']:
-        graph.add_edge(edge['source'], edge['target'])
+    for link in result['links']:
+        graph.add_edge(link['source'], link['target'])
 
     # 开始计算特征参数并且将结果保存到各个list
     degree_list = cal_degree(graph)
@@ -54,30 +54,11 @@ def cal_characters_arguments(result, layout_type):
     betweness_list = cal_betweness_centrality(graph)
     eigenvector_list = cal_eigenvector_centrality(graph)
     clustering_list = cal_clustering(graph)
-
-    # 新建list，用来替换result['nodes']
-    new_node_list = []
-    if layout_type != 'force' and layout_type != 'bundle':
-        for node in result['nodes']:
-            node_id = node['id']
-            new_node = {'id': node_id, 'x': node['x'], 'y': node['y'], 'degree': str(degree_list[node_id]),
-                        'degree_centrality': str(my_round(degree_centrality_list[node_id])),
-                        'closeness_centrality': str(my_round(closeness_list[node_id])),
-                        'betweness_centrality': str(my_round(betweness_list[node_id])),
-                        'eigenvector_centrality': str(my_round(eigenvector_list[node_id])),
-                        'clustering': str(my_round(clustering_list[node_id]))
-                        }
-            new_node_list.append(new_node)
-    else:
-        for node in result['nodes']:
-            node_id = node['id']
-            new_node = {'id': node_id, 'degree': str(degree_list[node_id]),
-                        'degree_centrality': str(my_round(degree_centrality_list[node_id])),
-                        'closeness_centrality': str(my_round(closeness_list[node_id])),
-                        'betweness_centrality': str(my_round(betweness_list[node_id])),
-                        'eigenvector_centrality': str(my_round(eigenvector_list[node_id])),
-                        'clustering': str(my_round(clustering_list[node_id]))
-                        }
-            new_node_list.append(new_node)
-
-    result['nodes'] = new_node_list
+    for node in result['nodes']:
+        node_id = node['id']
+        node['degree'] = str(degree_list[node_id])
+        node['degree_centrality'] = str(my_round(degree_centrality_list[node_id]))
+        node['closeness_centrality'] = str(my_round(closeness_list[node_id]))
+        node['betweness_centrality'] = str(my_round(betweness_list[node_id]))
+        node['eigenvector_centrality'] = str(my_round(eigenvector_list[node_id]))
+        node['clustering'] = str(my_round(clustering_list[node_id]))
