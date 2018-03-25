@@ -98,7 +98,7 @@ function BackChart() {
         $.ajax({
             type: "get",
             dataType: "json",
-            url: "/back_layout",
+            url: "/layout",
             data: {'layout_type': now_layout_type},
             async: true,
             contentType: "application/json",

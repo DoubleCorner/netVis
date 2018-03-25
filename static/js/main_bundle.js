@@ -138,7 +138,7 @@ function BundleChart() {
         $.ajax({
             type: "get",
             dataType: "json",
-            url: "/front_layout",
+            url: "/layout",
             data: {'layout_type': now_layout_type},
             async: true,
             contentType: "application/json",

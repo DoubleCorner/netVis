@@ -138,7 +138,7 @@ function ForceChart() {
             type: "get",
             dataType: "json",
             data: {'layout_type': now_layout_type},
-            url: "/front_layout",
+            url: "/layout",
             async: true,
             contentType: "application/json",
             success: function (d) {

@@ -39,6 +39,8 @@ def read_packages():
 
 
 def cal_back_layout_data(result, layout_type):
+    if layout_type == 'force' or layout_type == 'bundle':
+        return False
     nodes = []
     links = []
     for node in result['nodes']:
@@ -80,15 +82,7 @@ def get_initial_data():
     return jsonify(time_data)
 
 
-@app.route('/front_layout')
-def get_front_layout_data():
-    layout_type = request.args.get('layout_type')
-    result = copy.deepcopy(layout_data)
-    calNetwork.cal_characters_arguments(result)
-    return jsonify(result)
-
-
-@app.route('/back_layout')
+@app.route('/layout')
 def get_back_layout_data():
     layout_type = request.args.get('layout_type')
     result = copy.deepcopy(layout_data)
@@ -123,9 +117,8 @@ def get_brush_extent_data():
         if not edges['target'] in nodes:
             nodes.append(edges['target'])
             result['nodes'].append({'id': edges['target']})
-    if layout_type != 'force' and layout_type != 'bundle':
-        cal_back_layout_data(result, layout_type)
 
+    cal_back_layout_data(result, layout_type)
     calNetwork.cal_characters_arguments(result)
     return jsonify(result)
 
@@ -151,10 +144,8 @@ def up_load_file_layout():
     result['nodes'] = file_data['nodes']
     result['links'] = file_data['links']
 
-    if layout_type != 'force' and layout_type != 'bundle':
-        cal_back_layout_data(result, layout_type)
-
-    calNetwork.cal_characters_arguments(result, layout_type)
+    cal_back_layout_data(result, layout_type)
+    calNetwork.cal_characters_arguments(result)
     return jsonify(result)
 
 
