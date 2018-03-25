@@ -10,7 +10,7 @@ function InitData() {
         contentType: "application/json",
         success: function (data) {
             currentTime();
-            init_data_line = data;
+            init_data_line = data["packages"];
             init_data_line.forEach(function (every) {
                 every.date = new Date(every.date);
                 every.value = +every.value;

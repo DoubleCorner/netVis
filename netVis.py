@@ -8,17 +8,17 @@ import pandas as pd
 from flask import Flask, request
 from flask import render_template, jsonify
 from igraph import *
-from werkzeug.utils import secure_filename
 
 all_files_data = []
 layout_data = {}
-time_data = []
+time_data = {}
+upload_file_index = 0
 
 app = Flask(__name__)
 
 
 def read_packages():
-    path = 'files/package/'
+    path = 'files/packages/'
     files = os.listdir(path)
     for f in files:
         file_data = pd.read_csv(path + f)
@@ -29,11 +29,10 @@ def read_packages():
         item = {'time': f, 'data': data}
         all_files_data.append(item)
 
-    file_data = csv.DictReader(open('files/time_line.csv'))
-    for item in file_data:
-        time_data.append(item)
+    file_data = json.load(open('files/jsonFormat/time_line.json'))
+    time_data['packages'] = file_data['packages']
 
-    file_data = json.load(open('files/small-443nodes-476edges.json'))
+    file_data = json.load(open('files/jsonFormat/small-443nodes-476edges.json'))
     layout_data['nodes'] = file_data['nodes']
     layout_data['links'] = file_data['links']
 
@@ -128,8 +127,10 @@ def up_load_file():
     if request.method == 'POST':
         file_data = request.files['upload']
         if file_data:
-            upload_path = os.path.join('files/', secure_filename(file_data.filename))
+            global upload_file_index
+            upload_path = os.path.join('files/uploadFiles/', str(upload_file_index)) + '.json'
             file_data.save(upload_path)
+            upload_file_index += 1
             return upload_path
         else:
             return 'error'
