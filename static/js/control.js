@@ -160,8 +160,8 @@ function ControlChart() {
     ControlChart.prototype.handleFile = function (file, value) {
         if (value === "") return false;
         var file_name = file[0].name;
-        if (!file_name || !(file_name.endsWith(".csv"))) {
-            alert("请上传文件格式为.csv的文本文件。");
+        if (!file_name || !(file_name.endsWith(".json"))) {
+            alert("请上传文件格式为.json的文本文件。");
             //重置当前input的默认值，防止该文件无法再次上传
             $("#uploadFile").val("").change();
             return false;
