@@ -1,12 +1,14 @@
 function ControlChart() {
     var obj = {
-        '节点尺寸': INIT_NODE_SIZE,
-        '节点边线': INIT_NODE_STROKE,
-        '节点填充': INIT_NODE_COLOR,
-        '节点透明度': INIT_NODE_OPACITY,
-        '边宽度': INIT_EDGE_SIZE,
-        '边填充': INIT_EDGE_COLOR,
-        '边透明度': INIT_EDGE_OPACITY,
+        '节点尺寸': 2,
+        '节点边线': "#fffaf0",
+        '节点填充': "#FFFFFF",
+        '节点透明度': 0.9,
+        '边宽度': 1,
+        '边填充': "#FFFFFF",
+        '边透明度': 0.7,
+        '连续属性': 1,
+        '离散属性': 2,
         '标签类别': "编号",
         '标签显示': false,
         '标签填充': INIT_LABEL_COLOR,
@@ -33,7 +35,7 @@ function ControlChart() {
 
     var f1 = gui.addFolder('节点');
     var node_stroke = f1.addColor(obj, '节点边线');
-    var node_size = f1.add(obj, '节点尺寸').min(3).max(15).step(1);
+    var node_size = f1.add(obj, '节点尺寸').min(2).max(10).step(0.1);
     var node_color = f1.addColor(obj, '节点填充');
     var node_opacity = f1.add(obj, '节点透明度').min(0).max(1).step(0.05);
     /*节点信息监听*/
@@ -50,9 +52,14 @@ function ControlChart() {
         now_layout.setNodeOpacity(value);
     });
     var f2 = gui.addFolder('边');
-    var edge_width = f2.add(obj, '边宽度').min(1).max(5).step(1);
+    var edge_width = f2.add(obj, '边宽度').min(1).max(4).step(0.1);
     var edge_color = f2.addColor(obj, '边填充');
     var edge_opacity = f2.add(obj, '边透明度').min(0).max(1).step(0.05);
+    var edge_continuous = f2.add(obj, '连续属性');
+    var edge_discrete = f2.add(obj, '离散属性');
+    /*禁止用户更改*/
+    edge_continuous.__input.disabled = true;
+    edge_discrete.__input.disabled = true;
     /*边信息监听*/
     edge_width.onFinishChange(function (value) {
         now_layout.setEdgeWidth(value);
@@ -64,7 +71,7 @@ function ControlChart() {
         now_layout.setEdgeOpacity(value);
     });
     var f3 = gui.addFolder('标签');
-    var label_type = f3.add(obj, '标签类别', ['编号', '度', '度中心性', '接近中心性', '介数中心性', '特征向量中心性', '聚类系数']).listen();
+    var label_type = f3.add(obj, '标签类别', ['编号', '端口', '连续属性', '离散属性', '度', '度中心性', '接近中心性', '介数中心性', '特征向量中心性', '聚类系数']).listen();
     var label_show = f3.add(obj, '标签显示').listen();
     var label_size = f3.add(obj, '标签尺寸').min(5).max(18).step(1);
     var label_color = f3.addColor(obj, '标签填充');
@@ -200,43 +207,55 @@ function ControlChart() {
         $("#uploadFile").val("").change();
     };
 
-    ControlChart.prototype.initParameters = function () {
+    ControlChart.prototype.initParameters = function (d) {
         //listen和onChange同时使用，导致input无法输入，setValue可以解决。
-        node_stroke.setValue(INIT_NODE_STROKE);
-        node_size.setValue(INIT_NODE_SIZE);
-        node_color.setValue(INIT_NODE_COLOR);
-        node_opacity.setValue(INIT_NODE_OPACITY);
-        edge_width.setValue(INIT_EDGE_SIZE);
-        edge_color.setValue(INIT_EDGE_COLOR);
-        edge_opacity.setValue(INIT_EDGE_OPACITY);
         label_size.setValue(INIT_LABEL_SIZE);
         label_color.setValue(INIT_LABEL_COLOR);
         label_opacity.setValue(INIT_LABEL_OPACITY);
         obj.标签显示 = false;
         obj.标签类别 = "编号";
     };
+    ControlChart.prototype.updateNode = function (d) {
+        node_stroke.setValue(d.stroke);
+        node_size.setValue(d.size);
+        node_color.setValue(d.color);
+        node_opacity.setValue(d.opacity);
+    };
+
+    ControlChart.prototype.updateLink = function (d) {
+        edge_width.setValue(d.weight);
+        edge_color.setValue(d.color);
+        edge_opacity.setValue(d.opacity);
+        edge_discrete.setValue(d.discrete);
+        edge_continuous.setValue(d.continuous);
+    }
 }
 
 var now_layout;
 var now_layout_type = "";
-var INIT_NODE_COLOR = "#C4C9CF";
-var INIT_NODE_STROKE = "#FFFAF0";
-var INIT_EDGE_COLOR = "#808080";
-var INIT_LABEL_COLOR = "#FFFFFF";
 var OVER_COLOR = "#FF4500";
 var TARGET_COLOR = "#6A5ACD";
 var SOURCE_COLOR = "#32CD32";
-var SELECT_OPACITY = 1;
-var NODE_STROKE_WIDTH = 1.5;
-var INIT_NODE_SIZE = 0;
-var INIT_EDGE_SIZE = 1;
-var INIT_NODE_OPACITY = 0.9;
-var INIT_EDGE_OPACITY = 0.7;
+var REGION_OPACITY = 1;
+
+var CLICK_SELECT_COLOR = "#00FFFF";
+
+var NODE_STROKE_WIDTH = 1;
+
 var INIT_LABEL_SIZE = 8;
 var INIT_LABEL_OPACITY = 1;
+var INIT_LABEL_COLOR = "#FFFFFF";
+var INIT_NODE_LABEL_LINK_OPACITY = 0.7;
+var INIT_NODE_LABEL_LINK_WIDTH = 1;
 var INIT_NODE_LABEL_LINE_COLOR = "#FFC125";
-var MINI_NODE_SIZE = 1;
+
+var MINI_NODE_COLOR = "#C4C9Cf";
+var MINI_NODE_OPACITY = 0.9;
+var MINI_NODE_SIZE = 1.5;
+var MINI_LINK_COLOR = "#808080";
+var MINI_LINK_OPACITY = 0.7;
+var MINI_LINK_WIDTH = 1;
+
 var LOW_MAIN_OPACITY = 0.2;
-var R_RANGE = [2, 15];
 var SCALE_EXTENT = [0.5, 128];
 var control_chart = new ControlChart();

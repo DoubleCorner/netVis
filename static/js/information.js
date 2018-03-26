@@ -77,12 +77,6 @@ function InfChart() {
                 "select_data": [],
                 "brush": d3.svg.brush().x(x_scale)
             },
-            "size": {
-                "data": [],
-                "flag": false,
-                "select_data": [],
-                "brush": d3.svg.brush().x(x_scale)
-            },
             "port": {
                 "data": [],
                 "flag": false,
@@ -95,7 +89,6 @@ function InfChart() {
             item_list.degree.data.push(+item.degree);
             item_list.continuous.data.push(+item.continuous);
             item_list.discrete.data.push(+item.discrete);
-            item_list.size.data.push(+item.size);
             item_list.port.data.push(+item.port);
             item_list.degree_centrality.data.push(+item.degree_centrality);
             item_list.closeness_centrality.data.push(+item.closeness_centrality);
@@ -105,13 +98,13 @@ function InfChart() {
         });
 
         obj = {
-            '节点总量': graph.parameters.length.toString(),
-            '边总量': edges_number.toString(),
+            '节点总量': graph.parameters.length,
+            '边总量': edges_number,
             '节点编号': graph.parameters[0].id,
-            '连续属性': graph.parameters[0].continuous,
-            '离散属性': graph.parameters[0].discrete,
-            '节点端口': graph.parameters[0].port,
-            '度': graph.parameters[0].degree,
+            '连续属性': +graph.parameters[0].continuous,
+            '离散属性': +graph.parameters[0].discrete,
+            '节点端口': +graph.parameters[0].port,
+            '度': +graph.parameters[0].degree,
             '度中心性': graph.parameters[0].degree_centrality,
             '接近中心性': graph.parameters[0].closeness_centrality,
             '介数中心性': graph.parameters[0].betweness_centrality,
@@ -132,7 +125,7 @@ function InfChart() {
         gui.add(obj, '介数中心性').listen();
         gui.add(obj, '特征向量中心性').listen();
         gui.add(obj, '聚类系数').listen();
-        var feature = gui.add(obj, '特征分布', ['特征类别——所有节点', '度分布', '度中心性分布', '接近中心性分布', '介数中心性分布', '特征向量中心性分布', '聚类系数分布', '尺寸分布', '端口分布', '连续属性分布', '离散属性分布']);
+        var feature = gui.add(obj, '特征分布', ['特征类别——所有节点', '度分布', '度中心性分布', '接近中心性分布', '介数中心性分布', '特征向量中心性分布', '聚类系数分布', '端口分布', '连续属性分布', '离散属性分布']);
         feature.onChange(function (value) {
             drawGraph(value);
         });
@@ -418,36 +411,6 @@ function InfChart() {
                     drawOneGraph(item_list.discrete.data, "info_discrete", "离散属性");
                 }
                 break;
-            case "尺寸分布":
-                if (!item_list.size.flag) {
-                    item_div = list_container.append("div").attr("class", "item_div").attr("id", "info_size");
-                    item_div.append("img")
-                        .attr("class", "info_close")
-                        .attr("src", "../static/img/close.png")
-                        .attr("title", "关闭")
-                        .on("click", function () {
-                            item_div.remove();
-                            item_list.size.flag = false;
-                            item_list.size.select_data = [];
-                            item_list.size.brush.clear();
-                            restore();
-                        });
-                    item_div.append("img")
-                        .attr("class", "info_trash")
-                        .attr("src", "../static/img/eraser.png")
-                        .attr("title", "清空选定")
-                        .on("click", function () {
-                            if (!item_list.size.brush.empty()) {
-                                item_list.size.brush.clear();
-                                item_list.size.brush(d3.select(".brush." + "info_size").transition());
-                                item_list.size.brush.event(d3.select(".brush." + "info_size").transition().delay(500));
-                            }
-                        });
-                    item_list.size.flag = true;
-                    drawOneGraph(item_list.size.data, "info_size", "尺寸");
-                }
-                break;
-
         }
     }
 
@@ -510,9 +473,6 @@ function InfChart() {
                 break;
             case "info_clustering":
                 now_brush = item_list.clustering.brush;
-                break;
-            case "info_size":
-                now_brush = item_list.size.brush;
                 break;
             case "info_port":
                 now_brush = item_list.port.brush;
@@ -595,15 +555,6 @@ function InfChart() {
                             });
                             tip_label.text("数量：" + item_list.clustering.select_data.length + " 范围：" + true_range[0].toExponential(2) + " ~ " + true_range[1].toExponential(2));
                             break;
-                        case  "info_size":
-                            item_list.size.select_data = [];
-                            graph.parameters.forEach(function (value) {
-                                if (value.size >= error_range[0] && value.size <= error_range[1]) {
-                                    item_list.size.select_data.push(value.id);
-                                }
-                            });
-                            tip_label.text("数量：" + item_list.size.select_data.length + " 范围：" + true_range[0].toExponential(1) + " ~ " + true_range[1].toExponential(1));
-                            break;
                         case  "info_port":
                             item_list.port.select_data = [];
                             graph.parameters.forEach(function (value) {
@@ -653,9 +604,6 @@ function InfChart() {
                         case "info_clustering":
                             item_list.clustering.select_data = [];
                             break;
-                        case "info_size":
-                            item_list.size.select_data = [];
-                            break;
                         case "info_port":
                             item_list.port.select_data = [];
                             break;
@@ -683,7 +631,6 @@ function InfChart() {
             && item_list.closeness_centrality.brush.empty()
             && item_list.eigenvector_centrality.brush.empty()
             && item_list.betweness_centrality.brush.empty()
-            && item_list.size.brush.empty()
             && item_list.port.brush.empty()
             && item_list.continuous.brush.empty()
             && item_list.discrete.brush.empty()) {
@@ -697,7 +644,6 @@ function InfChart() {
                 .concat(item_list.betweness_centrality.select_data)
                 .concat(item_list.eigenvector_centrality.select_data)
                 .concat(item_list.clustering.select_data)
-                .concat(item_list.size.select_data)
                 .concat(item_list.port.select_data)
                 .concat(item_list.continuous.select_data)
                 .concat(item_list.discrete.select_data);

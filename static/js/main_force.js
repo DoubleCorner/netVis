@@ -9,7 +9,11 @@ function ForceChart() {
         charge_value: -20,
         mini_width: 200,
         mini_border: 2,
-        label_show_flag: false
+        label_show_flag: false,
+        selected_node: null,
+        selected_node_data: null,
+        selected_link: null,
+        selected_link_data: null
     };
     init();
     fresh();
@@ -18,13 +22,6 @@ function ForceChart() {
         info_chart.init(d.nodes, d.links.length);
         info_table.init(d.nodes);
         control_chart.initParameters();
-        mainChart.now_node_color = INIT_NODE_COLOR;
-        mainChart.now_node_stroke = INIT_NODE_STROKE;
-        mainChart.now_node_size = INIT_NODE_SIZE;
-        mainChart.now_node_opacity = INIT_NODE_OPACITY;
-        mainChart.now_link_color = INIT_EDGE_COLOR;
-        mainChart.now_link_size = INIT_EDGE_SIZE;
-        mainChart.now_link_opacity = INIT_EDGE_OPACITY;
         mainChart.now_label_size = INIT_LABEL_SIZE;
         mainChart.now_label_color = INIT_LABEL_COLOR;
         mainChart.now_label_opacity = INIT_LABEL_OPACITY;
@@ -156,8 +153,12 @@ function ForceChart() {
         mainChart.g.attr("transform", "translate(" + mainChart.translate + ")scale(" + mainChart.scale + ")");
         mainChart.zoom.translate(mainChart.translate);
         mainChart.zoom.scale(mainChart.scale);
-        mainChart.svg_links.attr("stroke-opacity", mainChart.now_link_opacity);
-        mainChart.svg_nodes.attr("opacity", mainChart.now_node_opacity);
+        mainChart.svg_links.attr("stroke-opacity", function (d) {
+            return +d.opacity;
+        });
+        mainChart.svg_nodes.attr("fill-opacity", function (d) {
+            return +d.opacity;
+        });
         mainChart.force.start();
         mainChart.map_frame.attr("transform", "translate(0, 0)").attr("width", mainChart.mini_width).attr("height", mainChart.mini_height);
     }
@@ -191,22 +192,22 @@ function ForceChart() {
                     .attr("height", parameters.height);
 
                 mainChart.svg_links.attr("stroke-opacity", LOW_MAIN_OPACITY);
-                mainChart.svg_nodes.attr("opacity", LOW_MAIN_OPACITY);
+                mainChart.svg_nodes.attr("fill-opacity", LOW_MAIN_OPACITY);
 
                 mainChart.svg_nodes.each(function (every) {
                     var node_x = mainChart.scale * parseFloat(d3.select(this).attr("cx")) + mainChart.translate[0];
                     var node_y = mainChart.scale * parseFloat(d3.select(this).attr("cy")) + mainChart.translate[1];
                     if (node_x >= parameters.x && node_x <= parameters.x + parameters.width &&
                         node_y >= parameters.y && node_y <= parameters.y + parameters.height) {
-                        d3.select(this).attr("opacity", SELECT_OPACITY);
-                        mainChart.links.forEach(function (item, j) {
+                        d3.select(this).attr("fill-opacity", REGION_OPACITY);
+                        mainChart.links.forEach(function (item) {
                             if (item.source.id === every.id) {
-                                d3.select("#link_" + j).attr("stroke-opacity", SELECT_OPACITY);
-                                d3.select("#node_" + item.target.id + " circle").attr("opacity", SELECT_OPACITY);
+                                d3.select("#link_" + item.id).attr("stroke-opacity", REGION_OPACITY);
+                                d3.select("#node_" + item.target.id + " circle").attr("fill-opacity", REGION_OPACITY);
                             }
                             if (item.target.id === every.id) {
-                                d3.select("#link_" + j).attr("stroke-opacity", SELECT_OPACITY);
-                                d3.select("#node_" + item.source.id + " circle").attr("opacity", SELECT_OPACITY);
+                                d3.select("#link_" + item.id).attr("stroke-opacity", REGION_OPACITY);
+                                d3.select("#node_" + item.source.id + " circle").attr("fill-opacity", REGION_OPACITY);
                             }
                         });
                     }
@@ -222,6 +223,8 @@ function ForceChart() {
             mainChart.rect.call(mainChart.zoom);
             mainChart.svg_nodes.on("mouseover", nodeMoveOver);
             mainChart.svg_nodes.on("mouseout", nodeMoveOut);
+            mainChart.svg_links.on("mouseover", linkMoveOver);
+            mainChart.svg_links.on("mouseout", linkMoveOut);
         })
     }
 
@@ -239,29 +242,25 @@ function ForceChart() {
         mainChart.rect.on(".zoom", null);//移除所有zoom事件
         mainChart.svg_nodes.on("mouseover", null);
         mainChart.svg_nodes.on("mouseout", null);
-
+        mainChart.svg_links.on("mouseover", null);
+        mainChart.svg_links.on("mouseout", null);
     }
 
     function handleData(d) {
         mainChart.nodes = d.nodes;
-        mainChart.links = [];
+        mainChart.links = d.links;
 
         var index_of_nodes = d3.map();
         for (var i = 0; i !== mainChart.nodes.length; ++i) {
             index_of_nodes.set(mainChart.nodes[i].id, i);
         }
 
-        d.links.forEach(function (item) {
-            var link = {
-                source: index_of_nodes.get(item.source),
-                target: index_of_nodes.get(item.target)
-            };
-            mainChart.links.push(link);
+        mainChart.links.forEach(function (item) {
+            item.source_name = item.source;
+            item.target_name = item.target;
+            item.source = index_of_nodes.get(item.source);
+            item.target = index_of_nodes.get(item.target);
         });
-
-        mainChart.r_scale = d3.scale.linear().domain(d3.extent(mainChart.nodes, function (d) {
-            return +d.size;
-        })).range(R_RANGE);
     }
 
     function drawGraph() {
@@ -290,16 +289,28 @@ function ForceChart() {
 
         mainChart.g = mainChart.svg.append("g");
 
-        mainChart.svg_links = mainChart.g.selectAll(".lines")
+        mainChart.svg_links = mainChart.g.selectAll(".links")
             .data(mainChart.links)
             .enter()
             .append("line")
-            .attr("id", function (d, i) {
-                return "link_" + i;
+            .attr("id", function (d) {
+                return "link_" + d.id;
             })
-            .attr("stroke-opacity", mainChart.now_link_opacity)
-            .attr("stroke", mainChart.now_link_color)
-            .attr("stroke-width", mainChart.now_link_size);
+            .attr("stroke-opacity", function (d) {
+                return +d.opacity;
+            })
+            .attr("stroke", function (d) {
+                return d.color;
+            })
+            .attr("stroke-width", function (d) {
+                return +d.weight;
+            })
+            .classed("select_link", false);
+
+        mainChart.selected_link = d3.select("#link_" + mainChart.links[0].id);
+        mainChart.selected_link_data = mainChart.links[0];
+        mainChart.selected_link.attr("stroke", CLICK_SELECT_COLOR).classed("select_link", true);
+        control_chart.updateLink(mainChart.selected_link_data);
 
         //节点可拖动
         mainChart.drag = d3.behavior.drag()
@@ -311,14 +322,14 @@ function ForceChart() {
                     .attr("x1", x).attr("y1", y)
                     .attr("x2", d3.select("#node_" + d.id + " text").attr("x"))
                     .attr("y2", d3.select("#node_" + d.id + " text").attr("y"));
-                mainChart.links.forEach(function (t, j) {
+                mainChart.links.forEach(function (t) {
                     if (t.source.id === d.id) {
-                        d3.select("#link_" + j).attr("x1", x);
-                        d3.select("#link_" + j).attr("y1", y);
+                        d3.select("#link_" + t.id).attr("x1", x);
+                        d3.select("#link_" + t.id).attr("y1", y);
                     }
                     if (t.target.id === d.id) {
-                        d3.select("#link_" + j).attr("x2", x);
-                        d3.select("#link_" + j).attr("y2", y);
+                        d3.select("#link_" + t.id).attr("x2", x);
+                        d3.select("#link_" + t.id).attr("y2", y);
                     }
                 })
             });
@@ -345,14 +356,24 @@ function ForceChart() {
 
         mainChart.svg_nodes = mainChart.svg_nodes_g.append("circle")
             .attr("r", function (d) {
-                return mainChart.r_scale(+d.size);
+                return +d.size;
             })
-            .attr("opacity", mainChart.now_node_opacity)
+            .attr("fill-opacity", function (d) {
+                return +d.opacity;
+            })
             .attr("fill", function (d) {
                 return d.color;
             })
-            .attr("stroke", mainChart.now_node_stroke)
-            .attr("stroke-width", NODE_STROKE_WIDTH);
+            .attr("stroke", function (d) {
+                return d.stroke;
+            })
+            .attr("stroke-width", NODE_STROKE_WIDTH)
+            .classed("select_node", false);
+
+        mainChart.selected_node = d3.select("#node_" + mainChart.nodes[0].id + " circle");
+        mainChart.selected_node_data = mainChart.nodes[0];
+        mainChart.selected_node.attr("fill", CLICK_SELECT_COLOR).classed("select_node", true);
+        control_chart.updateNode(mainChart.selected_node_data);
 
         mainChart.nodes_label = mainChart.svg_nodes_g.append("text")
             .attr("cursor", "default")
@@ -368,16 +389,23 @@ function ForceChart() {
         //添加节点和标签之间的虚线连线（标签可拖动）
         mainChart.nodes_line_label = mainChart.svg_nodes_g.append("line")
             .attr("stroke-dasharray", "3, 3")
-            .attr("stroke-opacity", INIT_EDGE_OPACITY)
+            .attr("stroke-opacity", INIT_NODE_LABEL_LINK_OPACITY)
             .attr("stroke", INIT_NODE_LABEL_LINE_COLOR)
             .attr("visibility", "hidden")
-            .attr("stroke-width", INIT_EDGE_SIZE);
+            .attr("stroke-width", INIT_NODE_LABEL_LINK_WIDTH);
+
 
         mainChart.svg_nodes.on("mouseover", nodeMoveOver);
 
         mainChart.svg_nodes.on("mouseout", nodeMoveOut);
 
-        mainChart.svg_nodes.on("click",nodeClick);
+        mainChart.svg_nodes.on("click", nodeClick);
+
+        mainChart.svg_links.on("mouseover", linkMoveOver);
+
+        mainChart.svg_links.on("mouseout", linkMoveOut);
+
+        mainChart.svg_links.on("click", linkClick);
 
         mainChart.force.on("start", function () {
             mainChart.svg_nodes.on(".drag", null);
@@ -468,9 +496,9 @@ function ForceChart() {
             .data(mainChart.links)
             .enter()
             .append("line")
-            .attr("stroke-opacity", INIT_EDGE_OPACITY)
-            .attr("stroke", INIT_EDGE_COLOR)
-            .attr("stroke-width", INIT_EDGE_SIZE)
+            .attr("stroke-opacity", MINI_LINK_OPACITY)
+            .attr("stroke", MINI_LINK_COLOR)
+            .attr("stroke-width", MINI_LINK_WIDTH)
             .attr("x1", function (d) {
                 return posMiniX(d.source.x);
             })
@@ -489,8 +517,8 @@ function ForceChart() {
             .enter()
             .append("circle")
             .attr("r", MINI_NODE_SIZE)
-            .attr("opacity", INIT_NODE_OPACITY)
-            .attr("fill", INIT_NODE_COLOR)
+            .attr("opacity", MINI_NODE_OPACITY)
+            .attr("fill", MINI_NODE_COLOR)
             .attr("cx", function (d) {
                 return posMiniX(d.x);
             })
@@ -507,122 +535,187 @@ function ForceChart() {
         return y / mainChart.height * mainChart.mini_height;
     }
 
+    function linkClick(d) {
+        if (d3.select(this).classed("select_link"))
+            return false;
+        else {
+            mainChart.selected_link.attr("stroke", mainChart.selected_link_data.color).classed("select_link", false);
+            mainChart.selected_link = d3.select(this);
+            mainChart.selected_link_data = d;
+            mainChart.selected_link.attr("stroke", CLICK_SELECT_COLOR).classed("select_link", true);
+            control_chart.updateLink(d);
+        }
+    }
+
+    function linkMoveOver(d) {
+        d3.select(this).attr("stroke", OVER_COLOR);
+        d3.select("#node_" + d.source_name + " circle").attr("fill", SOURCE_COLOR);
+        d3.select("#node_" + d.source_name + " text").attr("visibility", "visible");
+        d3.select("#node_" + d.source_name + " line").attr("visibility", "visible");
+        d3.select("#node_" + d.target_name + " circle").attr("fill", TARGET_COLOR);
+        d3.select("#node_" + d.target_name + " text").attr("visibility", "visible");
+        d3.select("#node_" + d.target_name + " line").attr("visibility", "visible");
+    }
+
+    function linkMoveOut(d) {
+        d3.select(this).attr("stroke", d.color);
+        if (d3.select(this).classed("select_link")) d3.select(this).attr("stroke", CLICK_SELECT_COLOR);
+        mainChart.nodes.forEach(function (item) {
+            if (item.id === d.source_name) {
+                d3.select("#node_" + d.source_name + " circle").attr("fill", item.color);
+                if (!mainChart.label_show_flag) {
+                    d3.select("#node_" + d.source_name + " text").attr("visibility", "hidden");
+                    d3.select("#node_" + d.source_name + " line").attr("visibility", "hidden");
+                }
+            }
+            if (item.id === d.target_name) {
+                d3.select("#node_" + d.target_name + " circle").attr("fill", item.color);
+                if (!mainChart.label_show_flag) {
+                    d3.select("#node_" + d.target_name + " text").attr("visibility", "hidden");
+                    d3.select("#node_" + d.target_name + " line").attr("visibility", "hidden");
+                }
+            }
+        });
+    }
+
     function nodeClick(d) {
-        info_chart.update(d);
+        if (d3.select(this).classed("select_node"))
+            return false;
+        else {
+            mainChart.selected_node.attr("fill", mainChart.selected_node_data.color).classed("select_node", false);
+            mainChart.selected_node = d3.select(this);
+            mainChart.selected_node_data = d;
+            mainChart.selected_node.attr("fill", CLICK_SELECT_COLOR).classed("select_node", true);
+            info_chart.update(d);
+            control_chart.updateNode(d);
+        }
     }
 
     function nodeMoveOver(d) {
         d3.select(this).attr("fill", OVER_COLOR);
-        d3.select("#node_" + d.id + " text").attr("visibility", "visible").attr("fill", OVER_COLOR);
+        d3.select("#node_" + d.id + " text").attr("visibility", "visible");
         d3.select("#node_" + d.id + " line").attr("visibility", "visible");
-        mainChart.links.forEach(function (t, j) {
+        mainChart.links.forEach(function (t) {
             if (t.source.id === d.id) {
-                d3.select("#link_" + j).attr("stroke", TARGET_COLOR);
+                d3.select("#link_" + t.id).attr("stroke", TARGET_COLOR);
                 d3.select("#node_" + t.target.id + " circle").attr("fill", TARGET_COLOR);
-                d3.select("#node_" + t.target.id + " text").attr("visibility", "visible").attr("fill", TARGET_COLOR);
+                d3.select("#node_" + t.target.id + " text").attr("visibility", "visible");
                 d3.select("#node_" + t.target.id + " line").attr("visibility", "visible");
             }
             else if (t.target.id === d.id) {
-                d3.select("#link_" + j).attr("stroke", SOURCE_COLOR);
+                d3.select("#link_" + t.id).attr("stroke", SOURCE_COLOR);
                 d3.select("#node_" + t.source.id + " circle").attr("fill", SOURCE_COLOR);
-                d3.select("#node_" + t.source.id + " text").attr("visibility", "visible").attr("fill", SOURCE_COLOR);
+                d3.select("#node_" + t.source.id + " text").attr("visibility", "visible");
                 d3.select("#node_" + t.source.id + " line").attr("visibility", "visible");
             }
         })
     }
 
     function nodeMoveOut(d) {
-        d3.select(this).attr("fill", mainChart.now_node_color);
+        d3.select(this).attr("fill", d.color);
+        if (d3.select(this).classed("select_node")) d3.select(this).attr("fill", CLICK_SELECT_COLOR);
         d3.select("#node_" + d.id + " text").attr("fill", mainChart.now_label_color);
         if (!mainChart.label_show_flag) {
             d3.select("#node_" + d.id + " text").attr("visibility", "hidden");
             d3.select("#node_" + d.id + " line").attr("visibility", "hidden");
         }
-        mainChart.links.forEach(function (t, j) {
+        mainChart.links.forEach(function (t) {
             if (t.source.id === d.id) {
-                d3.select("#link_" + j).attr("stroke", mainChart.now_link_color);
-                d3.select("#node_" + t.target.id + " circle").attr("fill", mainChart.now_node_color);
-                d3.select("#node_" + t.target.id + " text").attr("fill", mainChart.now_label_color);
-                if (!mainChart.label_show_flag) {
-                    d3.select("#node_" + t.target.id + " text").attr("visibility", "hidden");
-                    d3.select("#node_" + t.target.id + " line").attr("visibility", "hidden");
-                }
+                d3.select("#link_" + t.id).attr("stroke", t.color);
+                mainChart.nodes.forEach(function (item) {
+                    if (item.id === t.target.id) {
+                        d3.select("#node_" + t.target.id + " circle").attr("fill", item.color);
+                        if (d3.select("#node_" + t.target.id + " circle").classed("select_node")) d3.select("#node_" + t.target.id + " circle").attr("fill", CLICK_SELECT_COLOR);
+                        d3.select("#node_" + t.target.id + " text").attr("fill", mainChart.now_label_color);
+                        if (!mainChart.label_show_flag) {
+                            d3.select("#node_" + t.target.id + " text").attr("visibility", "hidden");
+                            d3.select("#node_" + t.target.id + " line").attr("visibility", "hidden");
+                        }
+                    }
+                });
             }
             else if (t.target.id === d.id) {
-                d3.select("#link_" + j).attr("stroke", mainChart.now_link_color);
-                d3.select("#node_" + t.source.id + " circle").attr("fill", mainChart.now_node_color);
-                d3.select("#node_" + t.source.id + " text").attr("fill", mainChart.now_label_color);
-                if (!mainChart.label_show_flag) {
-                    d3.select("#node_" + t.source.id + " text").attr("visibility", "hidden");
-                    d3.select("#node_" + t.source.id + " line").attr("visibility", "hidden");
-                }
+                d3.select("#link_" + t.id).attr("stroke", t.color);
+                mainChart.nodes.forEach(function (item) {
+                    if (item.id === t.source.id) {
+                        d3.select("#node_" + t.source.id + " circle").attr("fill", item.color);
+                        if (d3.select("#node_" + t.source.id + " circle").classed("select_node")) d3.select("#node_" + t.source.id + " circle").attr("fill", CLICK_SELECT_COLOR);
+                        d3.select("#node_" + t.source.id + " text").attr("fill", mainChart.now_label_color);
+                        if (!mainChart.label_show_flag) {
+                            d3.select("#node_" + t.source.id + " text").attr("visibility", "hidden");
+                            d3.select("#node_" + t.source.id + " line").attr("visibility", "hidden");
+                        }
+                    }
+                });
             }
         })
     }
 
     ForceChart.prototype.update = function (data) {
         mainChart.svg_links.attr("stroke-opacity", LOW_MAIN_OPACITY);
-        mainChart.svg_nodes.attr("opacity", LOW_MAIN_OPACITY);
+        mainChart.svg_nodes.attr("fill-opacity", LOW_MAIN_OPACITY);
         data.forEach(function (value) {
-            d3.select("#node_" + value + " circle").attr("opacity", SELECT_OPACITY);
+            d3.select("#node_" + value + " circle").attr("fill-opacity", REGION_OPACITY);
         });
     };
 
     ForceChart.prototype.restore = function () {
-        mainChart.svg_links.attr("stroke-opacity", mainChart.now_link_opacity);
-        mainChart.svg_nodes.attr("opacity", mainChart.now_node_opacity);
-    };
-
-    ForceChart.prototype.setNodeSize = function (nodeSize) {
-        mainChart.svg_nodes.attr("r", function (d) {
-            return nodeSize;
+        mainChart.svg_links.attr("stroke-opacity", function (d) {
+            return +d.opacity;
         });
-        mainChart.now_node_size = nodeSize;
+        mainChart.svg_nodes.attr("fill-opacity", function (d) {
+            return +d.opacity;
+        });
     };
 
-    ForceChart.prototype.setNodeStroke = function (nodeStroke) {
-        mainChart.svg_nodes.attr("stroke", nodeStroke);
-        mainChart.now_node_stroke = nodeStroke;
+    ForceChart.prototype.setNodeSize = function (node_size) {
+        mainChart.selected_node.attr("r", node_size);
+        mainChart.selected_node_data.size = node_size.toString();
     };
 
-    ForceChart.prototype.setNodeColor = function (nodeColor) {
-        mainChart.svg_nodes.attr("fill", nodeColor);
-        mainChart.now_node_color = nodeColor;
+    ForceChart.prototype.setNodeStroke = function (node_stroke) {
+        mainChart.selected_node.attr("stroke", node_stroke);
+        mainChart.selected_node_data.stroke = node_stroke;
     };
 
-    ForceChart.prototype.setNodeOpacity = function (nodeOpacity) {
-        mainChart.svg_nodes.attr("opacity", nodeOpacity);
-        mainChart.now_node_opacity = nodeOpacity;
+    ForceChart.prototype.setNodeColor = function (node_color) {
+        mainChart.selected_node.attr("fill", node_color);
+        mainChart.selected_node_data.color = node_color;
     };
 
-    ForceChart.prototype.setEdgeWidth = function (edgeWidth) {
-        mainChart.svg_links.attr("stroke-width", edgeWidth);
-        mainChart.now_link_size = edgeWidth;
+    ForceChart.prototype.setNodeOpacity = function (node_opacity) {
+        mainChart.selected_node.attr("fill-opacity", node_opacity);
+        mainChart.selected_node_data.opacity = node_opacity.toString();
     };
 
-    ForceChart.prototype.setEdgeColor = function (edgeColor) {
-        mainChart.svg_links.attr("stroke", edgeColor);
-        mainChart.now_link_color = edgeColor;
+    ForceChart.prototype.setEdgeWidth = function (link_width) {
+        mainChart.svg_links.attr("stroke-width", link_width);
+        mainChart.selected_link_data = link_width;
     };
 
-    ForceChart.prototype.setEdgeOpacity = function (edgeOpacity) {
-        mainChart.svg_links.attr("stroke-opacity", edgeOpacity);
-        mainChart.now_link_opacity = edgeOpacity;
+    ForceChart.prototype.setEdgeColor = function (edge_color) {
+        mainChart.selected_link.attr("stroke", edge_color);
+        mainChart.selected_link_data.color = edge_color;
     };
 
-    ForceChart.prototype.setLabelSize = function (fontSize) {
-        mainChart.nodes_label.attr("font-size", fontSize);
-        mainChart.now_label_size = fontSize;
+    ForceChart.prototype.setEdgeOpacity = function (edge_opacity) {
+        mainChart.selected_link.attr("stroke-opacity", edge_opacity);
+        mainChart.selected_link_data.opacity = edge_opacity;
     };
 
-    ForceChart.prototype.setLabelColor = function (fontColor) {
-        mainChart.nodes_label.attr("fill", fontColor);
-        mainChart.now_label_color = fontColor;
+    ForceChart.prototype.setLabelSize = function (font_size) {
+        mainChart.nodes_label.attr("font-size", font_size);
+        mainChart.now_label_size = font_size;
     };
 
-    ForceChart.prototype.setLabelOpacity = function (fontOpacity) {
-        mainChart.nodes_label.attr("opacity", fontOpacity);
-        mainChart.now_label_opacity = fontOpacity;
+    ForceChart.prototype.setLabelColor = function (font_color) {
+        mainChart.nodes_label.attr("fill", font_color);
+        mainChart.now_label_color = font_color;
+    };
+
+    ForceChart.prototype.setLabelOpacity = function (font_opacity) {
+        mainChart.nodes_label.attr("opacity", font_opacity);
+        mainChart.now_label_opacity = font_opacity;
     };
 
     ForceChart.prototype.setLabelShow = function (value) {
@@ -672,6 +765,21 @@ function ForceChart() {
             case "聚类系数":
                 mainChart.nodes_label.text(function (d) {
                     return d.clustering;
+                });
+                break;
+            case "端口":
+                mainChart.nodes_label.text(function (d) {
+                    return d.port;
+                });
+                break;
+            case "连续属性":
+                mainChart.nodes_label.text(function (d) {
+                    return d.continuous;
+                });
+                break;
+            case "离散属性":
+                mainChart.nodes_label.text(function (d) {
+                    return d.discrete;
                 });
                 break;
         }

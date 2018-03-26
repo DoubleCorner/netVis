@@ -17,7 +17,7 @@ app = Flask(__name__)
 
 
 def read_packages():
-    path = 'files/packages/'
+    path = 'files/csvFormat/packages/'
     files = os.listdir(path)
     for f in files:
         file_data = pd.read_csv(path + f)

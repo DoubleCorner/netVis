@@ -5,6 +5,7 @@
     width: 100% !important;
     height: auto;
     margin-right: 0 !important;
+    overflow: hidden;
 }
 
 .close-button.close-bottom {

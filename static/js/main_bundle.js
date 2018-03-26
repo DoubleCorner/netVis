@@ -8,7 +8,12 @@ function BundleChart() {
         map_svg: null,
         mini_width: 200,
         mini_border: 2,
-        padding: 40
+        padding: 40,
+        label_show_flag: false,
+        selected_node: null,
+        selected_node_data: null,
+        selected_link: null,
+        selected_link_data: null
     };
     init();
     fresh();
@@ -17,13 +22,6 @@ function BundleChart() {
         info_chart.init(d.nodes, d.links.length);
         info_table.init(d.nodes);
         control_chart.initParameters();
-        mainChart.now_node_color = INIT_NODE_COLOR;
-        mainChart.now_node_stroke = INIT_NODE_STROKE;
-        mainChart.now_node_size = INIT_NODE_SIZE;
-        mainChart.now_node_opacity = INIT_NODE_OPACITY;
-        mainChart.now_link_color = INIT_EDGE_COLOR;
-        mainChart.now_link_size = INIT_EDGE_SIZE;
-        mainChart.now_link_opacity = INIT_EDGE_OPACITY;
         mainChart.now_label_size = INIT_LABEL_SIZE;
         mainChart.now_label_color = INIT_LABEL_COLOR;
         mainChart.now_label_opacity = INIT_LABEL_OPACITY;
@@ -151,16 +149,16 @@ function BundleChart() {
         });
     }
 
-    function reflection(node, link) {
+    function reflection(nodes, links) {
         var hash = [];
-        for (var i = 0; i !== node.length; ++i) {
-            hash[node[i].id] = node[i];
+        for (var i = 0; i !== nodes.length; ++i) {
+            hash[nodes[i].id] = nodes[i];
         }
         var edges = [];
-        for (i = 0; i < link.length; i++) {
+        for (i = 0; i < links.length; i++) {
             edges.push({
-                source: hash[link[i].source],
-                target: hash[link[i].target]
+                source: hash[links[i].source],
+                target: hash[links[i].target]
             });
         }
         return edges;
@@ -172,8 +170,16 @@ function BundleChart() {
         mainChart.g.style("transform", "translate(" + mainChart.translate[0] + "px," + mainChart.translate[1] + "px)scale(" + mainChart.scale + ")");
         mainChart.zoom.translate(mainChart.translate);
         mainChart.zoom.scale(mainChart.scale);
-        mainChart.svg_links.attr("stroke-opacity", mainChart.now_link_opacity);
-        mainChart.svg_nodes.attr("opacity", mainChart.now_node_opacity);
+        mainChart.svg_links.attr("stroke-opacity", function (d) {
+            for (var index = 0; index !== mainChart.links.length; index++) {
+                if (d[0].id === mainChart.links[index].source && d[2].id === mainChart.links[index].target) {
+                    return +mainChart.links[index].opacity;
+                }
+            }
+        });
+        mainChart.svg_nodes.attr("fill-opacity", function (d) {
+            return +d.opacity;
+        });
         mainChart.map_frame.attr("transform", "translate(0, 0)").attr("width", mainChart.mini_width).attr("height", mainChart.mini_height);
     }
 
@@ -206,7 +212,7 @@ function BundleChart() {
                     .attr("height", parameters.height);
 
                 mainChart.svg_links.attr("stroke-opacity", LOW_MAIN_OPACITY);
-                mainChart.svg_nodes.attr("opacity", LOW_MAIN_OPACITY);
+                mainChart.svg_nodes.attr("fill-opacity", LOW_MAIN_OPACITY);
 
                 mainChart.svg_nodes.each(function (every) {
                     var cx = parseFloat(d3.select(this).attr("cx"));
@@ -215,15 +221,15 @@ function BundleChart() {
                     var node_y = mainChart.scale * cy + mainChart.translate[1] + mainChart.height / 2;
                     if (node_x >= parameters.x && node_x <= parameters.x + parameters.width &&
                         node_y >= parameters.y && node_y <= parameters.y + parameters.height) {
-                        d3.select(this).attr("opacity", SELECT_OPACITY);
-                        mainChart.result_links.forEach(function (item, j) {
-                            if (item[0].id === every.id) {
-                                d3.select("#link_" + j).attr("stroke-opacity", SELECT_OPACITY);
-                                d3.select("#node_" + item[2].id + " circle").attr("opacity", SELECT_OPACITY);
+                        d3.select(this).attr("fill-opacity", REGION_OPACITY);
+                        mainChart.links.forEach(function (item) {
+                            if (item.source === every.id) {
+                                d3.select("#link_" + item.id).attr("stroke-opacity", REGION_OPACITY);
+                                d3.select("#node_" + item.target + " circle").attr("fill-opacity", REGION_OPACITY);
                             }
-                            if (item[2].id === every.id) {
-                                d3.select("#link_" + j).attr("stroke-opacity", SELECT_OPACITY);
-                                d3.select("#node_" + item[0].id + " circle").attr("opacity", SELECT_OPACITY);
+                            if (item.target === every.id) {
+                                d3.select("#link_" + item.id).attr("stroke-opacity", REGION_OPACITY);
+                                d3.select("#node_" + item.source + " circle").attr("fill-opacity", REGION_OPACITY);
                             }
                         });
                     }
@@ -238,6 +244,8 @@ function BundleChart() {
             mainChart.rect.call(mainChart.zoom);
             mainChart.svg_nodes.on("mouseover", nodeMoveOver);
             mainChart.svg_nodes.on("mouseout", nodeMoveOut);
+            mainChart.svg_links.on("mouseover", linkMoveOver);
+            mainChart.svg_links.on("mouseout", linkMoveOut);
         })
     }
 
@@ -255,6 +263,8 @@ function BundleChart() {
         mainChart.rect.on(".zoom", null);//移除所有zoom事件
         mainChart.svg_nodes.on("mouseover", null);
         mainChart.svg_nodes.on("mouseout", null);
+        mainChart.svg_links.on("mouseover", null);
+        mainChart.svg_links.on("mouseout", null);
     }
 
     function handleData(d) {
@@ -264,10 +274,6 @@ function BundleChart() {
             id: "",
             children: mainChart.nodes
         };
-
-        mainChart.r_scale = d3.scale.linear().domain(d3.extent(mainChart.nodes, function (d) {
-            return +d.degree;
-        })).range(R_RANGE);
     }
 
     function drawGraph() {
@@ -282,6 +288,7 @@ function BundleChart() {
             });
         mainChart.result_nodes = mainChart.cluster.nodes(mainChart.nodes_trans);
         mainChart.bundle = d3.layout.bundle();
+        /*result_links中并不包含边所附带的属性*/
         mainChart.result_links = mainChart.bundle(reflection(mainChart.result_nodes, mainChart.links));
 
         mainChart.svg = d3.select("#main")
@@ -295,6 +302,7 @@ function BundleChart() {
             .attr("fill", "none")
             .attr("pointer-events", "all")
             .call(mainChart.zoom);
+
         mainChart.group = mainChart.svg.append("g")
             .attr("transform", "translate(" + mainChart.width / 2 + "," + mainChart.height / 2 + ")");
 
@@ -306,14 +314,42 @@ function BundleChart() {
             .data(mainChart.result_links)
             .enter()
             .append("path")
-            .attr("id", function (d, i) {
-                return "link_" + i;
+            .attr("id", function (d) {
+                for (var index = 0; index !== mainChart.links.length; index++) {
+                    if (d[0].id === mainChart.links[index].source && d[2].id === mainChart.links[index].target) {
+                        return "link_" + mainChart.links[index].id;
+                    }
+                }
             })
-            .attr("stroke-opacity", mainChart.now_link_opacity)
-            .attr("stroke", mainChart.now_link_color)
-            .attr("stroke-width", mainChart.now_link_size)
+            .attr("stroke-opacity", function (d) {
+                for (var index = 0; index !== mainChart.links.length; index++) {
+                    if (d[0].id === mainChart.links[index].source && d[2].id === mainChart.links[index].target) {
+                        return +mainChart.links[index].opacity;
+                    }
+                }
+            })
+            .attr("stroke", function (d) {
+                for (var index = 0; index !== mainChart.links.length; index++) {
+                    if (d[0].id === mainChart.links[index].source && d[2].id === mainChart.links[index].target) {
+                        return mainChart.links[index].color;
+                    }
+                }
+            })
+            .attr("stroke-width", function (d) {
+                for (var index = 0; index !== mainChart.links.length; index++) {
+                    if (d[0].id === mainChart.links[index].source && d[2].id === mainChart.links[index].target) {
+                        return +mainChart.links[index].weight;
+                    }
+                }
+            })
+            .attr("d", mainChart.line)
             .attr("fill", "none")
-            .attr("d", mainChart.line);
+            .classed("select_link", false);
+
+        mainChart.selected_link = d3.select("#link_" + mainChart.links[0].id);
+        mainChart.selected_link_data = mainChart.links[0];
+        mainChart.selected_link.attr("stroke", CLICK_SELECT_COLOR).classed("select_link", true);
+        control_chart.updateLink(mainChart.selected_link_data);
 
         mainChart.svg_nodes_g = mainChart.g.selectAll(".nodes")
             .data(mainChart.result_nodes.filter(function (d) {
@@ -327,18 +363,30 @@ function BundleChart() {
 
         mainChart.svg_nodes = mainChart.svg_nodes_g.append("circle")
             .attr("r", function (d) {
-                return mainChart.r_scale(+d.degree);
+                return +d.size;
             })
-            .attr("opacity", mainChart.now_node_opacity)
-            .attr("fill", mainChart.now_node_color)
-            .attr("stroke", mainChart.now_node_stroke)
+            .attr("fill-opacity", function (d) {
+                return +d.opacity;
+            })
+            .attr("fill", function (d) {
+                return d.color;
+            })
+            .attr("stroke", function (d) {
+                return d.stroke;
+            })
             .attr("stroke-width", NODE_STROKE_WIDTH)
+            .classed("select_node", false)
             .attr("cx", function (d) {
                 return (d.y + 5) * Math.cos((d.x - 90) * Math.PI / 180);
             })
             .attr("cy", function (d) {
                 return (d.y + 5) * Math.sin((d.x - 90) * Math.PI / 180);
             });
+
+        mainChart.selected_node = d3.select("#node_" + mainChart.nodes[0].id + " circle");
+        mainChart.selected_node_data = mainChart.nodes[0];
+        mainChart.selected_node.attr("fill", CLICK_SELECT_COLOR).classed("select_node", true);
+        control_chart.updateNode(mainChart.selected_node_data);
 
         mainChart.nodes_label = mainChart.svg_nodes_g.append("text")
             .attr("transform", function (d) {
@@ -361,6 +409,14 @@ function BundleChart() {
 
         mainChart.svg_nodes.on("mouseout", nodeMoveOut);
 
+        mainChart.svg_nodes.on("click", nodeClick);
+
+        mainChart.svg_links.on("mouseover", linkMoveOver);
+
+        mainChart.svg_links.on("mouseout", linkMoveOut);
+
+        mainChart.svg_links.on("click", linkClick);
+
         mainChart.mini_height = mainChart.mini_width * (mainChart.height / mainChart.width);
         mainChart.mini_scale = mainChart.mini_width / mainChart.width;
 
@@ -382,9 +438,9 @@ function BundleChart() {
             .data(mainChart.mini_result_links)
             .enter()
             .append("path")
-            .attr("stroke-opacity", INIT_EDGE_OPACITY)
-            .attr("stroke", INIT_EDGE_COLOR)
-            .attr("stroke-width", INIT_EDGE_SIZE)
+            .attr("stroke-opacity", MINI_LINK_OPACITY)
+            .attr("stroke", MINI_LINK_COLOR)
+            .attr("stroke-width", MINI_LINK_WIDTH)
             .attr("fill", "none")
             .attr("d", mainChart.line);
 
@@ -395,8 +451,8 @@ function BundleChart() {
             .enter()
             .append("circle")
             .attr("r", MINI_NODE_SIZE)
-            .attr("opacity", INIT_NODE_OPACITY)
-            .attr("fill", INIT_NODE_COLOR)
+            .attr("opacity", MINI_NODE_OPACITY)
+            .attr("fill", MINI_NODE_COLOR)
             .attr("transform", function (d) {
                 return "rotate(" + (d.x - 90) + ")translate(" + (d.y) + ",0)" + (d.x < 180 ? "" : "rotate(180)");
             });
@@ -422,111 +478,192 @@ function BundleChart() {
 
     }
 
+    function linkClick(d) {
+        if (d3.select(this).classed("select_link"))
+            return false;
+        else {
+            mainChart.selected_link.attr("stroke", mainChart.selected_link_data.color).classed("select_link", false);
+            mainChart.selected_link = d3.select(this);
+            for (var index = 0; index !== mainChart.links.length; index++) {
+                if (d[0].id === mainChart.links[index].source && d[2].id === mainChart.links[index].target) {
+                    mainChart.selected_link_data = mainChart.links[index];
+                    break;
+                }
+            }
+            mainChart.selected_link.attr("stroke", CLICK_SELECT_COLOR).classed("select_link", true);
+            control_chart.updateLink(d);
+        }
+    }
+
+    function linkMoveOver(d) {
+        d3.select(this).attr("stroke", OVER_COLOR);
+        d3.select("#node_" + d[0]["id"] + " circle").attr("fill", SOURCE_COLOR);
+        d3.select("#node_" + d[0]["id"] + " text").attr("visibility", "visible");
+        d3.select("#node_" + d[2]["id"] + " circle").attr("fill", TARGET_COLOR);
+        d3.select("#node_" + d[2]["id"] + " text").attr("visibility", "visible");
+    }
+
+    function linkMoveOut(d) {
+        for (var index = 0; index !== mainChart.links.length; index++) {
+            if (d[0].id === mainChart.links[index].source && d[2].id === mainChart.links[index].target) {
+                d3.select(this).attr("stroke", mainChart.links[index].color);
+                break;
+            }
+        }
+        if (d3.select(this).classed("select_link")) d3.select(this).attr("stroke", CLICK_SELECT_COLOR);
+        mainChart.nodes.forEach(function (item) {
+            if (item.id === d[0]["id"]) {
+                d3.select("#node_" + d[0]["id"] + " circle").attr("fill", item.color);
+                if (!mainChart.label_show_flag) {
+                    d3.select("#node_" + d[0]["id"] + " text").attr("visibility", "hidden");
+                }
+            }
+            if (item.id === d[2]["id"]) {
+                d3.select("#node_" + d[2]["id"] + " circle").attr("fill", item.color);
+                if (!mainChart.label_show_flag) {
+                    d3.select("#node_" + d[2]["id"] + " text").attr("visibility", "hidden");
+                }
+            }
+        });
+    }
+
+    function nodeClick(d) {
+        if (d3.select(this).classed("select_node"))
+            return false;
+        else {
+            mainChart.selected_node.attr("fill", mainChart.selected_node_data.color).classed("select_node", false);
+            mainChart.selected_node = d3.select(this);
+            mainChart.selected_node_data = d;
+            mainChart.selected_node.attr("fill", CLICK_SELECT_COLOR).classed("select_node", true);
+            info_chart.update(d);
+            control_chart.updateNode(d);
+        }
+    }
+
     function nodeMoveOver(d) {
-        info_chart.update(d);
         d3.select(this).attr("fill", OVER_COLOR);
         d3.select("#node_" + d.id + " text").attr("visibility", "visible");
-        mainChart.result_links.forEach(function (item, j) {
-            if (item[0].id === d.id) {
-                d3.select("#link_" + j).attr("stroke", TARGET_COLOR);
-                d3.select("#node_" + item[2].id + " circle").attr("fill", TARGET_COLOR);
-                d3.select("#node_" + item[2].id + " text").attr("visibility", "visible");
+        mainChart.links.forEach(function (t) {
+            if (t.source === d.id) {
+                d3.select("#link_" + t.id).attr("stroke", TARGET_COLOR);
+                d3.select("#node_" + t.target + " circle").attr("fill", TARGET_COLOR);
+                d3.select("#node_" + t.target + " text").attr("visibility", "visible");
             }
-            else if (item[2].id === d.id) {
-                d3.select("#link_" + j).attr("stroke", SOURCE_COLOR);
-                d3.select("#node_" + item[0].id + " circle").attr("fill", SOURCE_COLOR);
-                d3.select("#node_" + item[0].id + " text").attr("visibility", "visible");
+            else if (t.target === d.id) {
+                d3.select("#link_" + t.id).attr("stroke", SOURCE_COLOR);
+                d3.select("#node_" + t.source + " circle").attr("fill", SOURCE_COLOR);
+                d3.select("#node_" + t.source + " text").attr("visibility", "visible");
             }
         });
     }
 
     function nodeMoveOut(d) {
-        d3.select(this).attr("fill", mainChart.now_node_color);
-        d3.select("#node_" + d.id + " text").attr("visibility", "hidden");
-        mainChart.result_links.forEach(function (item, j) {
-            if (item[0].id === d.id) {
-                d3.select("#link_" + j).attr("stroke", mainChart.now_link_color);
-                d3.select("#node_" + item[2].id + " circle").attr("fill", mainChart.now_node_color);
-                d3.select("#node_" + item[2].id + " text").attr("visibility", "hidden");
+        d3.select(this).attr("fill", d.color);
+        if (d3.select(this).classed("select_node")) d3.select(this).attr("fill", CLICK_SELECT_COLOR);
+        d3.select("#node_" + d.id + " text").attr("fill", mainChart.now_label_color);
+        if (!mainChart.label_show_flag) {
+            d3.select("#node_" + d.id + " text").attr("visibility", "hidden");
+        }
+        mainChart.links.forEach(function (t) {
+            if (t.source === d.id) {
+                d3.select("#link_" + t.id).attr("stroke", t.color);
+                mainChart.nodes.forEach(function (item) {
+                    if (item.id === t.target) {
+                        d3.select("#node_" + t.target + " circle").attr("fill", item.color);
+                        if (d3.select("#node_" + t.target + " circle").classed("select_node")) d3.select("#node_" + t.target + " circle").attr("fill", CLICK_SELECT_COLOR);
+                        d3.select("#node_" + t.target + " text").attr("fill", mainChart.now_label_color);
+                        if (!mainChart.label_show_flag) {
+                            d3.select("#node_" + t.target + " text").attr("visibility", "hidden");
+                        }
+                    }
+                });
             }
-            else if (item[2].id === d.id) {
-                d3.select("#link_" + j).attr("stroke", mainChart.now_link_color);
-                d3.select("#node_" + item[0].id + " circle").attr("fill", mainChart.now_node_color);
-                d3.select("#node_" + item[0].id + " text").attr("visibility", "hidden");
+            else if (t.target === d.id) {
+                d3.select("#link_" + t.id).attr("stroke", t.color);
+                mainChart.nodes.forEach(function (item) {
+                    if (item.id === t.source) {
+                        d3.select("#node_" + t.source + " circle").attr("fill", item.color);
+                        if (d3.select("#node_" + t.source + " circle").classed("select_node")) d3.select("#node_" + t.source + " circle").attr("fill", CLICK_SELECT_COLOR);
+                        d3.select("#node_" + t.source + " text").attr("fill", mainChart.now_label_color);
+                        if (!mainChart.label_show_flag) {
+                            d3.select("#node_" + t.source + " text").attr("visibility", "hidden");
+                        }
+                    }
+                });
             }
         })
     }
 
     BundleChart.prototype.update = function (data) {
         mainChart.svg_links.attr("stroke-opacity", LOW_MAIN_OPACITY);
-        mainChart.svg_nodes.attr("opacity", LOW_MAIN_OPACITY);
+        mainChart.svg_nodes.attr("fill-opacity", LOW_MAIN_OPACITY);
         data.forEach(function (value) {
-            d3.select("#node_" + value + " circle").attr("opacity", SELECT_OPACITY);
+            d3.select("#node_" + value + " circle").attr("fill-opacity", REGION_OPACITY);
         });
     };
 
     BundleChart.prototype.restore = function () {
-        mainChart.svg_links.attr("stroke-opacity", mainChart.now_link_opacity);
-        mainChart.svg_nodes.attr("opacity", mainChart.now_node_opacity);
-    };
-
-    BundleChart.prototype.setNodeSize = function (nodeSize) {
-        mainChart.svg_nodes.attr("r", function (d) {
-            return mainChart.r_scale(d.degree) + nodeSize;
+        mainChart.svg_links.attr("stroke-opacity", function (d) {
+            return +d.opacity;
         });
-        mainChart.now_node_size = nodeSize;
+        mainChart.svg_nodes.attr("fill-opacity", function (d) {
+            return +d.opacity;
+        });
     };
 
-    BundleChart.prototype.setNodeStroke = function (nodeStroke) {
-        mainChart.svg_nodes.attr("stroke", nodeStroke);
-        mainChart.now_node_stroke = nodeStroke;
+    BundleChart.prototype.setNodeColor = function (node_color) {
+        mainChart.selected_node.attr("fill", node_color);
+        mainChart.selected_node_data.color = node_color;
     };
 
-    BundleChart.prototype.setNodeColor = function (nodeColor) {
-        mainChart.svg_nodes.attr("fill", nodeColor);
-        mainChart.now_node_color = nodeColor;
+    BundleChart.prototype.setNodeStroke = function (node_stroke) {
+        mainChart.selected_node.attr("stroke", node_stroke);
+        mainChart.selected_node_data.stroke = node_stroke;
     };
 
-    BundleChart.prototype.setNodeOpacity = function (nodeOpacity) {
-        mainChart.svg_nodes.attr("opacity", nodeOpacity);
-        mainChart.now_node_opacity = nodeOpacity;
+    BundleChart.prototype.setNodeOpacity = function (node_opacity) {
+        mainChart.selected_node.attr("fill-opacity", node_opacity);
+        mainChart.selected_node_data.opacity = node_opacity.toString();
     };
 
-    BundleChart.prototype.setEdgeWidth = function (edgeWidth) {
-        mainChart.svg_links.attr("stroke-width", edgeWidth);
-        mainChart.now_link_size = edgeWidth;
+    BundleChart.prototype.setEdgeWidth = function (link_width) {
+        mainChart.svg_links.attr("stroke-width", link_width);
+        mainChart.selected_link_data = link_width;
     };
 
-    BundleChart.prototype.setEdgeColor = function (edgeColor) {
-        mainChart.svg_links.attr("stroke", edgeColor);
-        mainChart.now_link_color = edgeColor;
+    BundleChart.prototype.setEdgeColor = function (edge_color) {
+        mainChart.selected_link.attr("stroke", edge_color);
+        mainChart.selected_link_data.color = edge_color;
     };
 
-    BundleChart.prototype.setEdgeOpacity = function (edgeOpacity) {
-        mainChart.svg_links.attr("stroke-opacity", edgeOpacity);
-        mainChart.now_link_opacity = edgeOpacity;
+    BundleChart.prototype.setEdgeOpacity = function (edge_opacity) {
+        mainChart.selected_link.attr("stroke-opacity", edge_opacity);
+        mainChart.selected_link_data.opacity = edge_opacity;
     };
 
-    BundleChart.prototype.setLabelSize = function (fontSize) {
-        mainChart.nodes_label.attr("font-size", fontSize);
-        mainChart.now_label_size = fontSize;
+    BundleChart.prototype.setLabelSize = function (font_size) {
+        mainChart.nodes_label.attr("font-size", font_size);
+        mainChart.now_label_size = font_size;
     };
 
-    BundleChart.prototype.setLabelColor = function (fontColor) {
-        mainChart.nodes_label.attr("fill", fontColor);
-        mainChart.now_label_color = fontColor;
+    BundleChart.prototype.setLabelColor = function (font_color) {
+        mainChart.nodes_label.attr("fill", font_color);
+        mainChart.now_label_color = font_color;
     };
 
-    BundleChart.prototype.setLabelOpacity = function (fontOpacity) {
-        mainChart.nodes_label.attr("opacity", fontOpacity);
-        mainChart.now_label_opacity = fontOpacity;
+    BundleChart.prototype.setLabelOpacity = function (font_opacity) {
+        mainChart.nodes_label.attr("opacity", font_opacity);
+        mainChart.now_label_opacity = font_opacity;
     };
 
     BundleChart.prototype.setLabelShow = function (value) {
-        if (value)
+        mainChart.label_show_flag = value;
+        if (mainChart.label_show_flag) {
             mainChart.nodes_label.attr("visibility", "visible");
-        else
+        }
+        else {
             mainChart.nodes_label.attr("visibility", "hidden");
+        }
     };
 
     BundleChart.prototype.setLabelType = function (value) {
@@ -564,6 +701,21 @@ function BundleChart() {
             case "聚类系数":
                 mainChart.nodes_label.text(function (d) {
                     return d.clustering;
+                });
+                break;
+            case "端口":
+                mainChart.nodes_label.text(function (d) {
+                    return d.port;
+                });
+                break;
+            case "连续属性":
+                mainChart.nodes_label.text(function (d) {
+                    return d.continuous;
+                });
+                break;
+            case "离散属性":
+                mainChart.nodes_label.text(function (d) {
+                    return d.discrete;
                 });
                 break;
         }
