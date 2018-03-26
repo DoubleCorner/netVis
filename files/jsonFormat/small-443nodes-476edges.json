@@ -1,7 +1,7 @@
 {
   "nodes": [
     {
-      "opacity": "0.21",
+      "opacity": "0.9",
       "level": "2",
       "color": "#C4C9CF",
       "continuous": "1",
@@ -9,7 +9,7 @@
       "discrete": "5",
       "stroke": "#fffaf0",
       "id": "4098",
-      "size": "2.4"
+      "size": "6.5"
     },
     {
       "opacity": "0.59",
