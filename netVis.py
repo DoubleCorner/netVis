@@ -17,15 +17,13 @@ app = Flask(__name__)
 
 
 def read_packages():
-    path = 'files/csvFormat/packages/'
+    path = 'files/jsonFormat/packages/'
     files = os.listdir(path)
     for f in files:
-        file_data = pd.read_csv(path + f)
-        json_data = file_data.to_json(orient='records')
-        data = json.loads(json_data)
-        f = f.replace('.csv', '')
+        json_data = json.load(open(path + f))
+        f = f.replace('.json', '')
         f = f.replace('_', ':')
-        item = {'time': f, 'data': data}
+        item = {'time': f, 'data': json_data}
         all_files_data.append(item)
 
     file_data = json.load(open('files/jsonFormat/time_line.json'))
@@ -103,18 +101,10 @@ def get_brush_extent_data():
         if item['time'] == end_time:
             flag = not flag
         if flag:
-            for edge in item['data']:
-                if edge not in result['links']:
-                    edge['source'] = str(edge['source'])
-                    edge['target'] = str(edge['target'])
-                    result['links'].append(edge)
-    for edges in result['links']:
-        if not edges['source'] in nodes:
-            nodes.append(edges['source'])
-            result['nodes'].append({'id': edges['source']})
-        if not edges['target'] in nodes:
-            nodes.append(edges['target'])
-            result['nodes'].append({'id': edges['target']})
+            # print item
+            item_data = item['data']
+            result['nodes'] = item_data['nodes']
+            result['links'] = item_data['links']
 
     cal_back_layout_data(result, layout_type)
     calNetwork.cal_characters_arguments(result)
