@@ -215,6 +215,7 @@ function ControlChart() {
         obj.标签显示 = false;
         obj.标签类别 = "编号";
     };
+
     ControlChart.prototype.updateNode = function (d) {
         node_stroke.setValue(d.stroke);
         node_size.setValue(d.size);
