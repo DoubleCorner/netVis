@@ -170,16 +170,31 @@ function BundleChart() {
         mainChart.g.style("transform", "translate(" + mainChart.translate[0] + "px," + mainChart.translate[1] + "px)scale(" + mainChart.scale + ")");
         mainChart.zoom.translate(mainChart.translate);
         mainChart.zoom.scale(mainChart.scale);
-        mainChart.svg_links.attr("stroke-opacity", function (d) {
-            for (var index = 0; index !== mainChart.links.length; index++) {
-                if (d[0].id === mainChart.links[index].source && d[2].id === mainChart.links[index].target) {
-                    return +mainChart.links[index].opacity;
+        mainChart.svg_links
+            .attr("stroke-opacity", function (d) {
+                for (var index = 0; index !== mainChart.links.length; index++) {
+                    if (d[0].id === mainChart.links[index].source && d[2].id === mainChart.links[index].target) {
+                        return +mainChart.links[index].opacity;
+                    }
                 }
-            }
-        });
-        mainChart.svg_nodes.attr("fill-opacity", function (d) {
-            return +d.opacity;
-        });
+            })
+            .attr("stroke-width", function (d) {
+                for (var index = 0; index !== mainChart.links.length; index++) {
+                    if (d[0].id === mainChart.links[index].source && d[2].id === mainChart.links[index].target) {
+                        return +mainChart.links[index].weight;
+                    }
+                }
+            });
+
+        mainChart.svg_nodes
+            .attr("fill-opacity", function (d) {
+                return +d.opacity;
+            })
+            .attr("r", function (d) {
+                return +d.size;
+            })
+            .attr("stroke-width", NODE_STROKE_WIDTH);
+        mainChart.nodes_label.attr("font-size", mainChart.now_label_size);
         mainChart.map_frame.attr("transform", "translate(0, 0)").attr("width", mainChart.mini_width).attr("height", mainChart.mini_height);
     }
 
@@ -253,6 +268,21 @@ function BundleChart() {
         mainChart.translate = d3.event.translate;
         mainChart.scale = d3.event.scale;
         mainChart.g.style("transform", "translate(" + mainChart.translate[0] + "px," + mainChart.translate[1] + "px)scale(" + mainChart.scale + ")");
+        /*g放大的时候其子节点不放大*/
+        if (mainChart.scale > 1) {
+            mainChart.svg_nodes.attr("r", function (d) {
+                return +d.size / mainChart.scale;
+            }).attr("stroke-width", NODE_STROKE_WIDTH / mainChart.scale);
+
+            mainChart.svg_links.attr("stroke-width", function (d) {
+                for (var index = 0; index !== mainChart.links.length; index++) {
+                    if (d[0].id === mainChart.links[index].source && d[2].id === mainChart.links[index].target) {
+                        return +mainChart.links[index].weight / mainChart.scale;
+                    }
+                }
+            });
+            mainChart.nodes_label.attr("font-size", mainChart.now_label_size / mainChart.scale);
+        }
         mainChart.map_frame.attr("transform", "translate(" + (-mainChart.translate[0] * mainChart.mini_scale / mainChart.scale) + ","
             + (-mainChart.translate[1] * mainChart.mini_scale / mainChart.scale) + ")")
             .attr("width", mainChart.mini_width / mainChart.scale)
@@ -377,10 +407,10 @@ function BundleChart() {
             .attr("stroke-width", NODE_STROKE_WIDTH)
             .classed("select_node", false)
             .attr("cx", function (d) {
-                return (d.y + 5) * Math.cos((d.x - 90) * Math.PI / 180);
+                return (d.y + 10) * Math.cos((d.x - 90) * Math.PI / 180);
             })
             .attr("cy", function (d) {
-                return (d.y + 5) * Math.sin((d.x - 90) * Math.PI / 180);
+                return (d.y + 10) * Math.sin((d.x - 90) * Math.PI / 180);
             });
 
         mainChart.selected_node = d3.select("#node_" + mainChart.nodes[0].id + " circle");
@@ -498,9 +528,9 @@ function BundleChart() {
     function linkMoveOver(d) {
         d3.select(this).attr("stroke", OVER_COLOR);
         d3.select("#node_" + d[0]["id"] + " circle").attr("fill", SOURCE_COLOR);
-        d3.select("#node_" + d[0]["id"] + " text").attr("visibility", "visible");
+        d3.select("#node_" + d[0]["id"] + " text").attr("visibility", "visible").attr("fill", SOURCE_COLOR);
         d3.select("#node_" + d[2]["id"] + " circle").attr("fill", TARGET_COLOR);
-        d3.select("#node_" + d[2]["id"] + " text").attr("visibility", "visible");
+        d3.select("#node_" + d[2]["id"] + " text").attr("visibility", "visible").attr("fill", TARGET_COLOR);
     }
 
     function linkMoveOut(d) {
@@ -514,12 +544,14 @@ function BundleChart() {
         mainChart.nodes.forEach(function (item) {
             if (item.id === d[0]["id"]) {
                 d3.select("#node_" + d[0]["id"] + " circle").attr("fill", item.color);
+                d3.select("#node_" + d[0]["id"] + " text").attr("fill", mainChart.now_label_color);
                 if (!mainChart.label_show_flag) {
-                    d3.select("#node_" + d[0]["id"] + " text").attr("visibility", "hidden");
+                    d3.select("#node_" + d[0]["id"] + " text").attr("visibility", "hidden")
                 }
             }
             if (item.id === d[2]["id"]) {
                 d3.select("#node_" + d[2]["id"] + " circle").attr("fill", item.color);
+                d3.select("#node_" + d[2]["id"] + " text").attr("fill", mainChart.now_label_color);
                 if (!mainChart.label_show_flag) {
                     d3.select("#node_" + d[2]["id"] + " text").attr("visibility", "hidden");
                 }
@@ -542,17 +574,17 @@ function BundleChart() {
 
     function nodeMoveOver(d) {
         d3.select(this).attr("fill", OVER_COLOR);
-        d3.select("#node_" + d.id + " text").attr("visibility", "visible");
+        d3.select("#node_" + d.id + " text").attr("visibility", "visible").attr("fill", OVER_COLOR);
         mainChart.links.forEach(function (t) {
             if (t.source === d.id) {
                 d3.select("#link_" + t.id).attr("stroke", TARGET_COLOR);
                 d3.select("#node_" + t.target + " circle").attr("fill", TARGET_COLOR);
-                d3.select("#node_" + t.target + " text").attr("visibility", "visible");
+                d3.select("#node_" + t.target + " text").attr("visibility", "visible").attr("fill", TARGET_COLOR);
             }
             else if (t.target === d.id) {
                 d3.select("#link_" + t.id).attr("stroke", SOURCE_COLOR);
                 d3.select("#node_" + t.source + " circle").attr("fill", SOURCE_COLOR);
-                d3.select("#node_" + t.source + " text").attr("visibility", "visible");
+                d3.select("#node_" + t.source + " text").attr("visibility", "visible").attr("fill", SOURCE_COLOR);
             }
         });
     }

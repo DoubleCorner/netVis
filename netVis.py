@@ -2,7 +2,6 @@
 import json
 import copy
 import calNetwork
-
 from flask import Flask, request
 from flask import render_template, jsonify
 from igraph import *
@@ -25,12 +24,15 @@ def read_packages():
         item = {'time': f, 'data': json_data}
         all_files_data.append(item)
 
-    file_data = json.load(open('files/jsonFormat/time_line.json'))
+    file_data = json.load(open('files/jsonFormat/time-line.json'))
     time_data['packages'] = file_data['packages']
 
     file_data = json.load(open('files/jsonFormat/small-443nodes-476edges.json'))
     layout_data['nodes'] = file_data['nodes']
     layout_data['links'] = file_data['links']
+
+
+read_packages()
 
 
 def cal_back_layout_data(result, layout_type):
@@ -88,8 +90,12 @@ def get_back_layout_data():
 
 @app.route('/brush_extent')
 def get_brush_extent_data():
+    # 标记时间的起始节点
     flag = False
+    # 记录节点id
     nodes = []
+    # 记录边id
+    links = []
     result = {'nodes': [], 'links': []}
     start_time = request.args.get('start')
     end_time = request.args.get('end')
@@ -100,11 +106,25 @@ def get_brush_extent_data():
         if item['time'] == end_time:
             flag = not flag
         if flag:
-            # print item
-            item_data = item['data']
-            result['nodes'] = item_data['nodes']
-            result['links'] = item_data['links']
-
+            for node in item['data']['nodes']:
+                if node['id'] not in nodes:
+                    result['nodes'].append(node)
+                    nodes.append(node['id'])
+                else:
+                    for re_node in result['nodes']:
+                        if re_node['id'] == node['id']:
+                            result['nodes'].remove(re_node)
+                            result['nodes'].append(node)
+                            break
+            for link in item['data']['links']:
+                if link['id'] not in links:
+                    result['links'].append(link)
+                    links.append(link['id'])
+                else:
+                    for re_link in result['links']:
+                        if re_link['id'] == link['id']:
+                            result['links'].remove(re_link)
+                            result['links'].append(link)
     cal_back_layout_data(result, layout_type)
     calNetwork.cal_characters_arguments(result)
     return jsonify(result)
@@ -116,7 +136,7 @@ def up_load_file():
         file_data = request.files['upload']
         if file_data:
             global upload_file_index
-            upload_path = os.path.join('files/uploadFiles/', str(upload_file_index)) + '.json'
+            upload_path = 'files/uploadFiles/' + upload_file_index + '.json'
             file_data.save(upload_path)
             upload_file_index += 1
             return upload_path
@@ -140,5 +160,4 @@ def up_load_file_layout():
 
 if __name__ == '__main__':
     app.debug = True
-    read_packages()
     app.run(host='0.0.0.0')

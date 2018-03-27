@@ -114,9 +114,13 @@ function BackChart() {
         mainChart.g.attr("transform", "translate(" + mainChart.translate + ")scale(" + mainChart.scale + ")");
         mainChart.zoom.translate(mainChart.translate);
         mainChart.zoom.scale(mainChart.scale);
+
         mainChart.svg_links
             .attr("stroke-opacity", function (d) {
                 return +d.opacity;
+            })
+            .attr("stroke-width", function (d) {
+                return +d.weight;
             })
             .attr("x1", function (d) {
                 return mainChart.x_scale(d.x1);
@@ -134,6 +138,10 @@ function BackChart() {
             .attr("fill-opacity", function (d) {
                 return +d.opacity;
             })
+            .attr("r", function (d) {
+                return +d.size;
+            })
+            .attr("stroke-width", NODE_STROKE_WIDTH)
             .attr('cx', function (d) {
                 return mainChart.x_scale(d.x);
             })
@@ -141,6 +149,7 @@ function BackChart() {
                 return mainChart.y_scale(d.y);
             });
         mainChart.nodes_label
+            .attr("font-size", mainChart.now_label_size)
             .attr("x", function (d) {
                 return mainChart.x_scale(d.x);
             })
@@ -151,6 +160,7 @@ function BackChart() {
                 return "rotate(30," + mainChart.x_scale(d.x) + " " + mainChart.y_scale(d.y) + ")"
             });
         mainChart.nodes_line_label
+            .attr("stroke-width", INIT_NODE_LABEL_LINK_WIDTH)
             .attr("x1", function (d) {
                 return mainChart.x_scale(d.x);
             })
@@ -237,6 +247,18 @@ function BackChart() {
         mainChart.translate = d3.event.translate;
         mainChart.scale = d3.event.scale;
         mainChart.g.attr("transform", "translate(" + mainChart.translate + ")scale(" + mainChart.scale + ")");
+        /*g放大的时候其子节点不放大*/
+        if (mainChart.scale > 1) {
+            mainChart.svg_nodes.attr("r", function (d) {
+                return +d.size / mainChart.scale;
+            }).attr("stroke-width", NODE_STROKE_WIDTH / mainChart.scale);
+
+            mainChart.svg_links.attr("stroke-width", function (d) {
+                return +d.weight / mainChart.scale;
+            });
+            mainChart.nodes_label.attr("font-size", mainChart.now_label_size / mainChart.scale);
+            mainChart.nodes_line_label.attr("stroke-width", INIT_NODE_LABEL_LINK_WIDTH / mainChart.scale);
+        }
         mainChart.map_frame.attr("transform", "translate(" + (-mainChart.translate[0] * mainChart.mini_scale / mainChart.scale) + ","
             + (-mainChart.translate[1] * mainChart.mini_scale / mainChart.scale) + ")")
             .attr("width", mainChart.mini_width / mainChart.scale)
@@ -596,7 +618,6 @@ function BackChart() {
     function nodeMoveOut(d) {
         d3.select(this).attr("fill", d.color);
         if (d3.select(this).classed("select_node")) d3.select(this).attr("fill", CLICK_SELECT_COLOR);
-        d3.select("#node_" + d.id + " text").attr("fill", mainChart.now_label_color);
         if (!mainChart.label_show_flag) {
             d3.select("#node_" + d.id + " text").attr("visibility", "hidden");
             d3.select("#node_" + d.id + " line").attr("visibility", "hidden");
@@ -608,7 +629,6 @@ function BackChart() {
                     if (item.id === t.target) {
                         d3.select("#node_" + t.target + " circle").attr("fill", item.color);
                         if (d3.select("#node_" + t.target + " circle").classed("select_node")) d3.select("#node_" + t.target + " circle").attr("fill", CLICK_SELECT_COLOR);
-                        d3.select("#node_" + t.target + " text").attr("fill", mainChart.now_label_color);
                         if (!mainChart.label_show_flag) {
                             d3.select("#node_" + t.target + " text").attr("visibility", "hidden");
                             d3.select("#node_" + t.target + " line").attr("visibility", "hidden");
@@ -622,7 +642,6 @@ function BackChart() {
                     if (item.id === t.source) {
                         d3.select("#node_" + t.source + " circle").attr("fill", item.color);
                         if (d3.select("#node_" + t.source + " circle").classed("select_node")) d3.select("#node_" + t.source + " circle").attr("fill", CLICK_SELECT_COLOR);
-                        d3.select("#node_" + t.source + " text").attr("fill", mainChart.now_label_color);
                         if (!mainChart.label_show_flag) {
                             d3.select("#node_" + t.source + " text").attr("visibility", "hidden");
                             d3.select("#node_" + t.source + " line").attr("visibility", "hidden");
