@@ -9,6 +9,7 @@ function ControlChart() {
         '边透明度': 0.7,
         '连续属性': 1,
         '离散属性': 2,
+        '边编号': "",
         '标签类别': "编号",
         '标签显示': false,
         '标签填充': INIT_LABEL_COLOR,
@@ -55,11 +56,13 @@ function ControlChart() {
     var edge_width = f2.add(obj, '边宽度').min(1).max(4).step(0.1);
     var edge_color = f2.addColor(obj, '边填充');
     var edge_opacity = f2.add(obj, '边透明度').min(0).max(1).step(0.05);
+    var edge_id = f2.add(obj, '边编号');
     var edge_continuous = f2.add(obj, '连续属性');
     var edge_discrete = f2.add(obj, '离散属性');
     /*禁止用户更改*/
     edge_continuous.__input.disabled = true;
     edge_discrete.__input.disabled = true;
+    edge_id.__input.disabled = true;
     /*边信息监听*/
     edge_width.onFinishChange(function (value) {
         now_layout.setEdgeWidth(value);
@@ -229,33 +232,33 @@ function ControlChart() {
         edge_opacity.setValue(d.opacity);
         edge_discrete.setValue(d.discrete);
         edge_continuous.setValue(d.continuous);
+        edge_id.setValue(d.id);
     }
 }
 
 var now_layout;
 var now_layout_type = "";
-var OVER_COLOR = "#FF4500";
-var TARGET_COLOR = "#6A5ACD";
-var SOURCE_COLOR = "#32CD32";
+var OVER_COLOR = "#8A2BE2";
+var TARGET_COLOR = "#FF4500";
+var SOURCE_COLOR = "#00FF7F";
 var REGION_OPACITY = 1;
 
 var CLICK_SELECT_COLOR = "#00FFFF";
-
 var NODE_STROKE_WIDTH = 1;
 
 var INIT_LABEL_SIZE = 8;
 var INIT_LABEL_OPACITY = 1;
-var INIT_LABEL_COLOR = "#FFFFFF";
+var INIT_LABEL_COLOR = "#FFFAFA";
 var INIT_NODE_LABEL_LINK_OPACITY = 0.7;
 var INIT_NODE_LABEL_LINK_WIDTH = 1;
-var INIT_NODE_LABEL_LINE_COLOR = "#FFC125";
+var INIT_NODE_LABEL_LINE_COLOR = "#FFD700";
 
 var MINI_NODE_COLOR = "#C4C9Cf";
 var MINI_NODE_OPACITY = 0.9;
-var MINI_NODE_SIZE = 1.5;
+var MINI_NODE_SIZE = 1;
 var MINI_LINK_COLOR = "#808080";
 var MINI_LINK_OPACITY = 0.7;
-var MINI_LINK_WIDTH = 1;
+var MINI_LINK_WIDTH = 0.5;
 
 var LOW_MAIN_OPACITY = 0.2;
 var SCALE_EXTENT = [0.5, 128];
