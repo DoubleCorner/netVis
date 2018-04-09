@@ -171,7 +171,8 @@ function TimeLineChart() {
             if (now_time_index >= init_data_line.length - timeChart.numbers) {
                 now_time_index = 0;
             }
-        }, 2000, 90);
+            updateMain([init_data_line[now_time_index].date, init_data_line[now_time_index + 1].date])
+        }, 10000, 90);
     }
 
     function stop() {
