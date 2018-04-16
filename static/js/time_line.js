@@ -147,7 +147,7 @@ function TimeLineChart() {
             //重新加载的轴和条形图
             timeChart.rects.transition()
                 .ease("linear")
-                .duration(2000)
+                .duration(REFRESH_FREQUENCY)
                 .attr("x", function (d) {
                     return timeChart.x_scale(d.date);
                 })
@@ -158,21 +158,21 @@ function TimeLineChart() {
             timeChart.svg.select("g.x.axis")
                 .transition()
                 .ease("linear")
-                .duration(2000)
+                .duration(REFRESH_FREQUENCY)
                 .call(timeChart.x_axis.scale(timeChart.x_scale));
 
             timeChart.svg.select("g.y.axis")
                 .transition()
                 .ease("linear")
-                .duration(2000)
+                .duration(REFRESH_FREQUENCY)
                 .call(timeChart.y_axis.scale(timeChart.y_scale));
 
             //防止数据越界
             if (now_time_index >= init_data_line.length - timeChart.numbers) {
                 now_time_index = 0;
             }
-            updateMain([init_data_line[now_time_index].date, init_data_line[now_time_index + 1].date])
-        }, 10000, 90);
+            updateMain([init_data_line[now_time_index].date, init_data_line[now_time_index + 1].date]);
+        }, REFRESH_FREQUENCY, 90);
     }
 
     function stop() {
@@ -281,3 +281,4 @@ var INIT_RECT_COLOR = "#C4C9CF";
 var TIME_INTERVAL = 5;
 var MAX_PACKAGES = 10;
 var INIT_RECT_OPACITY = 0.9;
+var REFRESH_FREQUENCY = 10000;

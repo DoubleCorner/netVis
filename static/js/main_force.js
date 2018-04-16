@@ -173,8 +173,7 @@ function ForceChart() {
         mainChart.nodes_line_label.attr("stroke-width", INIT_NODE_LABEL_LINK_WIDTH);
         mainChart.force.start();
         mainChart.map_frame.attr("transform", "translate(0, 0)").attr("width", mainChart.mini_width).attr("height", mainChart.mini_height);
-
-
+        level(mainChart.scale);
     }
 
     function regionSelect() {
@@ -262,6 +261,7 @@ function ForceChart() {
             + (-mainChart.translate[1] * mainChart.mini_scale / mainChart.scale) + ")")
             .attr("width", mainChart.mini_width / mainChart.scale)
             .attr("height", mainChart.mini_height / mainChart.scale);
+        level(mainChart.scale);
     }
 
     function removeZoom() {
@@ -512,6 +512,18 @@ function ForceChart() {
             .attr("class", "mini_background")
             .attr("width", mainChart.mini_width)
             .attr("height", mainChart.mini_height);
+        level(mainChart.scale);
+    }
+
+    function level(level) {
+        var log = Math.ceil(Math.log2(level));
+        if (log <= 1) log = 1;
+        mainChart.svg_nodes_g.attr("visibility", function (d) {
+            return (parseInt(d.level) > log ? "hidden" : "visible");
+        });
+        mainChart.svg_links.attr("visibility", function (d) {
+            return ((parseInt(d.target.level) > log || parseInt(d.source.level) > log) ? "hidden" : "visible");
+        });
     }
 
     function miniMap() {
