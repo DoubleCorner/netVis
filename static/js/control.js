@@ -261,5 +261,5 @@ var MINI_LINK_OPACITY = 0.7;
 var MINI_LINK_WIDTH = 0.5;
 
 var LOW_MAIN_OPACITY = 0.2;
-var SCALE_EXTENT = [0.5, 8];
+var SCALE_EXTENT = [0.5, 128];
 var control_chart = new ControlChart();
