@@ -139,7 +139,7 @@ def get_edge_index(all_edges_list, source, target):
             return str(index + 1)
 
 
-get_all_edges_packages()
+# get_all_edges_packages()
 # read_file('small-443nodes-476edges.csv',csv_file_path)
 # read_file('middle-1204nodes-2492edges.csv',csv_file_path)
 # read_file('large-2992nodes-9697edges.csv',csv_file_path)
