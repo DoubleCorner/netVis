@@ -66,7 +66,6 @@ def csv_to_json(csv_file, json_file):
 
     with open(json_file, 'w') as out_file:
         json.dump({'nodes': json_nodes, 'links': json_edges}, out_file, ensure_ascii=False)
-    print(len(json_nodes))
 
 
 def get_all_edges_packages():
