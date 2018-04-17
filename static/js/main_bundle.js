@@ -196,6 +196,8 @@ function BundleChart() {
             .attr("stroke-width", NODE_STROKE_WIDTH);
         mainChart.nodes_label.attr("font-size", mainChart.now_label_size);
         mainChart.map_frame.attr("transform", "translate(0, 0)").attr("width", mainChart.mini_width).attr("height", mainChart.mini_height);
+
+        level(mainChart.scale);
     }
 
     function regionSelect() {
@@ -287,6 +289,8 @@ function BundleChart() {
             + (-mainChart.translate[1] * mainChart.mini_scale / mainChart.scale) + ")")
             .attr("width", mainChart.mini_width / mainChart.scale)
             .attr("height", mainChart.mini_height / mainChart.scale);
+
+        level(mainChart.scale);
     }
 
     function removeZoom() {
@@ -455,6 +459,18 @@ function BundleChart() {
             .attr("width", mainChart.mini_width)
             .attr("height", mainChart.mini_height)
             .attr("transform", "translate(0," + (mainChart.mini_width - mainChart.mini_height) / 2 + ")");
+
+        level(mainChart.scale);
+    }
+
+    function level(level) {
+        var log = Math.ceil(level);
+        mainChart.svg_nodes_g.attr("display", function (d) {
+            return (parseInt(d.level) > log ? "none" : "block");
+        });
+        mainChart.svg_links.attr("display", function (d) {
+            return ((parseInt(d[0].level) > log || parseInt(d[2].level) > log) ? "none" : "block");
+        });
     }
 
     function miniMap() {
@@ -521,7 +537,7 @@ function BundleChart() {
                 }
             }
             mainChart.selected_link.attr("stroke", CLICK_SELECT_COLOR).classed("select_link", true);
-            control_chart.updateLink(d);
+            control_chart.updateLink(mainChart.selected_link_data);
         }
     }
 
@@ -567,8 +583,8 @@ function BundleChart() {
             mainChart.selected_node = d3.select(this);
             mainChart.selected_node_data = d;
             mainChart.selected_node.attr("fill", CLICK_SELECT_COLOR).classed("select_node", true);
-            info_chart.update(d);
-            control_chart.updateNode(d);
+            info_chart.update(mainChart.selected_node_data);
+            control_chart.updateNode(mainChart.selected_node_data);
         }
     }
 

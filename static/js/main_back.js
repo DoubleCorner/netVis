@@ -174,6 +174,8 @@ function BackChart() {
                 return mainChart.y_scale(d.y);
             });
         mainChart.map_frame.attr("transform", "translate(0, 0)").attr("width", mainChart.mini_width).attr("height", mainChart.mini_height);
+
+        level(mainChart.scale);
     }
 
     function regionSelect() {
@@ -263,6 +265,8 @@ function BackChart() {
             + (-mainChart.translate[1] * mainChart.mini_scale / mainChart.scale) + ")")
             .attr("width", mainChart.mini_width / mainChart.scale)
             .attr("height", mainChart.mini_height / mainChart.scale);
+
+        level(mainChart.scale);
     }
 
     function removeZoom() {
@@ -473,6 +477,27 @@ function BackChart() {
             .attr("width", mainChart.mini_width)
             .attr("height", mainChart.mini_height)
             .attr("transform", "translate(0," + (mainChart.mini_width - mainChart.mini_height) / 2 + ")");
+
+        level(mainChart.scale);
+    }
+
+    function level(level) {
+        var log = Math.ceil(level);
+        mainChart.svg_nodes_g.attr("display", function (d) {
+            return (parseInt(d.level) > log ? "none" : "block");
+        });
+        mainChart.svg_links.attr("display", function (d) {
+            var source_level, target_level;
+            for (var i = 0; i !== mainChart.nodes.length; i++) {
+                if (mainChart.nodes[i].id === d.source) {
+                    source_level = mainChart.nodes[i].level;
+                }
+                if (mainChart.nodes[i].id === d.target) {
+                    target_level = mainChart.nodes[i].level;
+                }
+            }
+            return ((parseInt(source_level) > log || parseInt(target_level) > log) ? "none" : "block");
+        });
     }
 
     function miniMap() {
@@ -547,7 +572,7 @@ function BackChart() {
             mainChart.selected_link = d3.select(this);
             mainChart.selected_link_data = d;
             mainChart.selected_link.attr("stroke", CLICK_SELECT_COLOR).classed("select_link", true);
-            control_chart.updateLink(d);
+            control_chart.updateLink(mainChart.selected_link_data);
         }
     }
 
@@ -590,8 +615,8 @@ function BackChart() {
             mainChart.selected_node = d3.select(this);
             mainChart.selected_node_data = d;
             mainChart.selected_node.attr("fill", CLICK_SELECT_COLOR).classed("select_node", true);
-            info_chart.update(d);
-            control_chart.updateNode(d);
+            info_chart.update(mainChart.selected_node_data);
+            control_chart.updateNode(mainChart.selected_node_data);
         }
     }
 

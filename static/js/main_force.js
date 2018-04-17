@@ -516,13 +516,12 @@ function ForceChart() {
     }
 
     function level(level) {
-        var log = Math.ceil(Math.log2(level));
-        if (log <= 1) log = 1;
-        mainChart.svg_nodes_g.attr("visibility", function (d) {
-            return (parseInt(d.level) > log ? "hidden" : "visible");
+        var log = Math.ceil(level);
+        mainChart.svg_nodes_g.attr("display", function (d) {
+            return (parseInt(d.level) > log ? "none" : "block");
         });
-        mainChart.svg_links.attr("visibility", function (d) {
-            return ((parseInt(d.target.level) > log || parseInt(d.source.level) > log) ? "hidden" : "visible");
+        mainChart.svg_links.attr("display", function (d) {
+            return ((parseInt(d.target.level) > log || parseInt(d.source.level) > log) ? "none" : "block");
         });
     }
 
@@ -581,7 +580,7 @@ function ForceChart() {
             mainChart.selected_link = d3.select(this);
             mainChart.selected_link_data = d;
             mainChart.selected_link.attr("stroke", CLICK_SELECT_COLOR).classed("select_link", true);
-            control_chart.updateLink(d);
+            control_chart.updateLink(mainChart.selected_link_data);
         }
     }
 
@@ -624,8 +623,8 @@ function ForceChart() {
             mainChart.selected_node = d3.select(this);
             mainChart.selected_node_data = d;
             mainChart.selected_node.attr("fill", CLICK_SELECT_COLOR).classed("select_node", true);
-            info_chart.update(d);
-            control_chart.updateNode(d);
+            info_chart.update(mainChart.selected_node_data);
+            control_chart.updateNode(mainChart.selected_node_data);
         }
     }
 
