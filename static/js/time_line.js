@@ -81,7 +81,7 @@ function TimeLineChart() {
         timeChart.x_axis = d3.svg.axis()
             .scale(timeChart.x_scale)
             .orient("bottom")
-            .ticks(30);
+            .ticks(d3.time.minutes, 5);
         //y方向上的轴线
         timeChart.y_axis = d3.svg.axis()
             .scale(timeChart.y_scale)
