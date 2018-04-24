@@ -30,13 +30,6 @@ function BackChart() {
     }
 
     function init() {
-        mainChart.translate = [0, 0];
-        mainChart.scale = 1;
-        mainChart.zoom = d3.behavior.zoom()
-            .scaleExtent(SCALE_EXTENT)
-            .on("zoom", zoomed);
-        mainChart.node_click_state = 0;
-        mainChart.move_state = 0;
         mainChart.tools = d3.select("#main")
             .append("div")
             .attr("class", "btn-group")
@@ -179,7 +172,6 @@ function BackChart() {
     }
 
     function regionSelect() {
-        mainChart.node_click_state = 1;
         removeZoom();
         var start_pos;
         mainChart.svg.on("mousedown", function () {
@@ -293,6 +285,12 @@ function BackChart() {
     function drawGraph() {
         if (mainChart.svg) mainChart.svg.remove();
         if (mainChart.map_svg) mainChart.map_svg.remove();
+        mainChart.translate = [0, 0];
+        mainChart.scale = 1;
+        mainChart.zoom = d3.behavior.zoom()
+            .scaleExtent(SCALE_EXTENT)
+            .on("zoom", zoomed);
+        mainChart.move_state = 0;
 
         mainChart.svg = d3.select("#main")
             .append("svg")

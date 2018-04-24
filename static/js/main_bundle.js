@@ -31,12 +31,6 @@ function BundleChart() {
     }
 
     function init() {
-        mainChart.translate = [0, 0];
-        mainChart.scale = 1;
-        mainChart.zoom = d3.behavior.zoom()
-            .scaleExtent(SCALE_EXTENT)
-            .on("zoom", zoomed);
-
         mainChart.line = d3.svg.line.radial()
             .interpolate("bundle")
             .tension(0.85)
@@ -313,6 +307,11 @@ function BundleChart() {
     function drawGraph() {
         if (mainChart.svg) mainChart.svg.remove();
         if (mainChart.map_svg) mainChart.map_svg.remove();
+        mainChart.translate = [0, 0];
+        mainChart.scale = 1;
+        mainChart.zoom = d3.behavior.zoom()
+            .scaleExtent(SCALE_EXTENT)
+            .on("zoom", zoomed);
 
         mainChart.inner_radius = mainChart.radius - mainChart.padding;
         mainChart.cluster = d3.layout.cluster()
