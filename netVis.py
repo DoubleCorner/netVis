@@ -1,6 +1,5 @@
 # coding=utf-8
 import json
-import copy
 import calNetwork
 from flask import Flask, request
 from flask import render_template, jsonify
