@@ -10,6 +10,7 @@ upload_file_index = 0
 app = Flask(__name__)
 
 
+# 计算布局数据
 def cal_back_layout_data(result, layout_type):
     if layout_type == 'force' or layout_type == 'bundle':
         return False
@@ -49,6 +50,7 @@ def index():
     return render_template('index.html')
 
 
+# 初始化数据
 @app.route('/initial')
 def get_initial_data():
     with open('files/jsonFormat/time-line.json') as fi:
@@ -56,6 +58,7 @@ def get_initial_data():
         return jsonify(result)
 
 
+# 返回布局数据
 @app.route('/layout')
 def get_back_layout_data():
     layout_type = request.args.get('layout_type')
@@ -66,6 +69,7 @@ def get_back_layout_data():
         return jsonify(result)
 
 
+# 刷取数据
 @app.route('/brush_extent')
 def get_brush_extent_data():
     # 标记时间的起始节点
@@ -114,6 +118,7 @@ def get_brush_extent_data():
     return jsonify(result)
 
 
+# 保存上传文件数据
 @app.route('/upload_file', methods=['GET', 'POST'])
 def up_load_file():
     if request.method == 'POST':
@@ -128,6 +133,7 @@ def up_load_file():
             return 'error'
 
 
+# 返回上传文件的布局数据
 @app.route('/upload_file/layout')
 def up_load_file_layout():
     layout_type = request.args.get('layout_type')
