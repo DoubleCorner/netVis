@@ -5,7 +5,7 @@ var Export = {
             return false;
         }
         var BB = self.Blob;
-        var contentStr = JSON.stringify(data); //内容
+        var contentStr = JSON.stringify(data, null, ' '); //内容
         var file_name = "data_" + this.getDate() + ".json"; //文件名
         saveAs(
             new BB(
