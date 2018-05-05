@@ -24,9 +24,10 @@ function InitData() {
         }
     });
 
-    $(window).resize(function () {
-        window.location.reload();
-    });
+    //禁止自动刷新
+    // $(window).resize(function () {
+    //     window.location.reload();
+    // });
 
     function currentTime() {
         var date = FormatDateTime((new Date()));

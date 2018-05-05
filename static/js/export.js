@@ -1,12 +1,12 @@
 var Export = {
-    saveAsCsv: function (data) {
-        if (!data || data.length === 0) {
-            alert("筛选数据不能为空");
-            return;
+    saveAsJson: function (data) {
+        if (!data.nodes.length) {
+            alert("请筛选要保存的数据！");
+            return false;
         }
         var BB = self.Blob;
-        var contentStr = d3.csv.format(data); //内容
-        var file_name = "csv_" + this.getDate() + ".csv"; //文件名
+        var contentStr = JSON.stringify(data); //内容
+        var file_name = "data_" + this.getDate() + ".json"; //文件名
         saveAs(
             new BB(
                 ["\ufeff" + contentStr] //\ufeff防止utf8 bom防止中文乱码

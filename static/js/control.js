@@ -22,8 +22,8 @@ function ControlChart() {
         '自定义截图': function () {
             if ($("#header").attr("Capture") !== "Ready") alert("插件未安装!");
         },
-        '筛选数据保存': function () {
-            Export.saveAsCsv(info_table.getData());
+        '保存筛选数据': function () {
+            Export.saveAsJson(now_layout.saveShowedData());
         },
         '上传文件': function () {
             $("#uploadFile").click();
@@ -154,7 +154,7 @@ function ControlChart() {
     var f4 = gui.addFolder('工具');
     f4.add(obj, '主视图截图');
     f4.add(obj, '自定义截图');
-    f4.add(obj, '筛选数据保存');
+    f4.add(obj, '保存筛选数据');
     f4.add(obj, '上传文件');
     f1.open();
     f2.open();

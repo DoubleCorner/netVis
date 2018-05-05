@@ -7,7 +7,6 @@ function InfTable() {
         {field: "id", title: "编号"},
         {field: "continuous", title: "连续属性", sortable: true},
         {field: "discrete", title: "离散属性", sortable: true},
-        {field: "level", title: "级别", sortable: true},
         {field: "port", title: "端口", sortable: true},
         {field: "degree", title: "度", sortable: true},
         {field: "degree_centrality", title: "度中心性", sortable: true},
@@ -52,8 +51,10 @@ function InfTable() {
         });
         if (result.length)
             now_layout.update(result);
-        else
+        else{
             now_layout.restore();
+            info_table.restore();
+        }
     }
 
     InfTable.prototype.init = function (data) {
@@ -66,7 +67,7 @@ function InfTable() {
         data.forEach(function (item) {
             for (var i = 0; i !== table_data.length; ++i) {
                 if (item === table_data[i].id) {
-                    table_data[i]["0"] = false;
+                    table_data[i]["0"] = true;
                     update_data.push(table_data[i]);
                     break;
                 }
@@ -83,7 +84,7 @@ function InfTable() {
     };
 
     InfTable.prototype.getData = function () {
-        return table.bootstrapTable('getData');
+        return table.bootstrapTable('getSelections');
     }
 }
 

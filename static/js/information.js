@@ -7,7 +7,7 @@ function InfChart() {
     var list_container = d3.select("#information")
         .append("div")
         .attr("id", "list_container")
-        .style("height", $("#information").height() - 380 + "px");
+        .style("height", $("#information").height() - 353 + "px");
     var width = $("#list_container").width();
     var sub_width = width - 10;
     var sub_height = 100;
@@ -103,7 +103,6 @@ function InfChart() {
             '节点编号': graph.parameters[0].id,
             '连续属性': +graph.parameters[0].continuous,
             '离散属性': +graph.parameters[0].discrete,
-            '级别': +graph.parameters[0].level,
             '节点端口': +graph.parameters[0].port,
             '度': +graph.parameters[0].degree,
             '度中心性': graph.parameters[0].degree_centrality,
@@ -119,7 +118,6 @@ function InfChart() {
         gui.add(obj, '节点编号').listen();
         gui.add(obj, '连续属性').listen();
         gui.add(obj, '离散属性').listen();
-        gui.add(obj, '级别').listen();
         gui.add(obj, '节点端口').listen();
         gui.add(obj, '度').listen();
         gui.add(obj, '度中心性').listen();
@@ -141,7 +139,6 @@ function InfChart() {
         obj.度 = item.degree;
         obj.连续属性 = item.continuous;
         obj.离散属性 = item.discrete;
-        obj.级别 = item.level;
         obj.节点端口 = item.port;
         obj.度中心性 = item.degree_centrality;
         obj.接近中心性 = item.closeness_centrality;

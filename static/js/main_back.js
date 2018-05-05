@@ -200,7 +200,7 @@ function BackChart() {
 
                 mainChart.svg_links.attr("stroke-opacity", LOW_MAIN_OPACITY);
                 mainChart.svg_nodes.attr("opacity", LOW_MAIN_OPACITY);
-
+                var selected_data = d3.set();
                 mainChart.svg_nodes.each(function (every) {
                     var true_node_x = d3.select(this).attr("cx");
                     var true_node_y = d3.select(this).attr("cy");
@@ -209,18 +209,22 @@ function BackChart() {
                     if (node_x >= parameters.x && node_x <= parameters.x + parameters.width &&
                         node_y >= parameters.y && node_y <= parameters.y + parameters.height) {
                         d3.select(this).attr("opacity", REGION_OPACITY);
+                        selected_data.add(every.id);
                         mainChart.links.forEach(function (item) {
                             if (item.source === every.id) {
                                 d3.select("#link_" + item.id).attr("stroke-opacity", REGION_OPACITY);
                                 d3.select("#node_" + item.target + " circle").attr("opacity", REGION_OPACITY);
+                                selected_data.add(item.target);
                             }
                             if (item.target === every.id) {
                                 d3.select("#link_" + item.id).attr("stroke-opacity", REGION_OPACITY);
                                 d3.select("#node_" + item.source + " circle").attr("opacity", REGION_OPACITY);
+                                selected_data.add(item.source);
                             }
                         });
                     }
                 });
+                info_table.update(selected_data.values());
             }
 
         }).on("mouseup", function () {
@@ -811,5 +815,22 @@ function BackChart() {
 
     BackChart.prototype.updateFromOthers = function (d) {
         run(d);
+    };
+
+    BackChart.prototype.saveShowedData = function () {
+        var links_id = [];
+        var result = {nodes: [], links: []};
+        result.nodes = info_table.getData();
+        mainChart.links.forEach(function (link) {
+            result.nodes.forEach(function (node) {
+                if (link.source === node.id || link.target === node.id) {
+                    if (links_id.indexOf(link.id) === -1) {
+                        result.links.push(link);
+                        links_id.push(link.id);
+                    }
+                }
+            });
+        });
+        return result;
     };
 }

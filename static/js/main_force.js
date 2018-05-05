@@ -167,6 +167,7 @@ function ForceChart() {
         mainChart.force.start();
         mainChart.map_frame.attr("transform", "translate(0, 0)").attr("width", mainChart.mini_width).attr("height", mainChart.mini_height);
         level(mainChart.scale);
+        info_table.restore();
     }
 
     function regionSelect() {
@@ -198,25 +199,29 @@ function ForceChart() {
 
                 mainChart.svg_links.attr("stroke-opacity", LOW_MAIN_OPACITY);
                 mainChart.svg_nodes.attr("opacity", LOW_MAIN_OPACITY);
-
+                var selected_data = d3.set();
                 mainChart.svg_nodes.each(function (every) {
                     var node_x = mainChart.scale * parseFloat(d3.select(this).attr("cx")) + mainChart.translate[0];
                     var node_y = mainChart.scale * parseFloat(d3.select(this).attr("cy")) + mainChart.translate[1];
                     if (node_x >= parameters.x && node_x <= parameters.x + parameters.width &&
                         node_y >= parameters.y && node_y <= parameters.y + parameters.height) {
                         d3.select(this).attr("opacity", REGION_OPACITY);
+                        selected_data.add(every.id);
                         mainChart.links.forEach(function (item) {
                             if (item.source.id === every.id) {
                                 d3.select("#link_" + item.id).attr("stroke-opacity", REGION_OPACITY);
                                 d3.select("#node_" + item.target.id + " circle").attr("opacity", REGION_OPACITY);
+                                selected_data.add(item.target.id);
                             }
                             if (item.target.id === every.id) {
                                 d3.select("#link_" + item.id).attr("stroke-opacity", REGION_OPACITY);
                                 d3.select("#node_" + item.source.id + " circle").attr("opacity", REGION_OPACITY);
+                                selected_data.add(item.source.id);
                             }
                         });
                     }
                 });
+                info_table.update(selected_data.values());
             }
 
         }).on("mouseup", function () {
@@ -822,6 +827,19 @@ function ForceChart() {
     };
 
     ForceChart.prototype.saveShowedData = function () {
-
+        var links_id = [];
+        var result = {nodes: [], links: []};
+        result.nodes = info_table.getData();
+        mainChart.links.forEach(function (link) {
+            result.nodes.forEach(function (node) {
+                if (link.source.id === node.id || link.target.id === node.id) {
+                    if (links_id.indexOf(link.id) === -1) {
+                        result.links.push(link);
+                        links_id.push(link.id);
+                    }
+                }
+            });
+        });
+        return result;
     };
 }
