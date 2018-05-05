@@ -770,5 +770,5 @@ function BundleChart() {
 
     BundleChart.prototype.updateFromOthers = function (d) {
         run(d);
-    }
+    };
 }

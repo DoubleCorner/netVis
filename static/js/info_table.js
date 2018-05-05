@@ -7,6 +7,7 @@ function InfTable() {
         {field: "id", title: "编号"},
         {field: "continuous", title: "连续属性", sortable: true},
         {field: "discrete", title: "离散属性", sortable: true},
+        {field: "level", title: "级别", sortable: true},
         {field: "port", title: "端口", sortable: true},
         {field: "degree", title: "度", sortable: true},
         {field: "degree_centrality", title: "度中心性", sortable: true},

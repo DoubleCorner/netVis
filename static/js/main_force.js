@@ -819,5 +819,9 @@ function ForceChart() {
 
     ForceChart.prototype.updateFromOthers = function (d) {
         run(d);
-    }
+    };
+
+    ForceChart.prototype.saveShowedData = function () {
+
+    };
 }
