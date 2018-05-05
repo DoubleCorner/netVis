@@ -154,7 +154,7 @@ function ForceChart() {
                 return +d.weight;
             });
         mainChart.svg_nodes
-            .attr("fill-opacity", function (d) {
+            .attr("opacity", function (d) {
                 return +d.opacity;
             })
             .attr("r", function (d) {
@@ -197,22 +197,22 @@ function ForceChart() {
                     .attr("height", parameters.height);
 
                 mainChart.svg_links.attr("stroke-opacity", LOW_MAIN_OPACITY);
-                mainChart.svg_nodes.attr("fill-opacity", LOW_MAIN_OPACITY);
+                mainChart.svg_nodes.attr("opacity", LOW_MAIN_OPACITY);
 
                 mainChart.svg_nodes.each(function (every) {
                     var node_x = mainChart.scale * parseFloat(d3.select(this).attr("cx")) + mainChart.translate[0];
                     var node_y = mainChart.scale * parseFloat(d3.select(this).attr("cy")) + mainChart.translate[1];
                     if (node_x >= parameters.x && node_x <= parameters.x + parameters.width &&
                         node_y >= parameters.y && node_y <= parameters.y + parameters.height) {
-                        d3.select(this).attr("fill-opacity", REGION_OPACITY);
+                        d3.select(this).attr("opacity", REGION_OPACITY);
                         mainChart.links.forEach(function (item) {
                             if (item.source.id === every.id) {
                                 d3.select("#link_" + item.id).attr("stroke-opacity", REGION_OPACITY);
-                                d3.select("#node_" + item.target.id + " circle").attr("fill-opacity", REGION_OPACITY);
+                                d3.select("#node_" + item.target.id + " circle").attr("opacity", REGION_OPACITY);
                             }
                             if (item.target.id === every.id) {
                                 d3.select("#link_" + item.id).attr("stroke-opacity", REGION_OPACITY);
-                                d3.select("#node_" + item.source.id + " circle").attr("fill-opacity", REGION_OPACITY);
+                                d3.select("#node_" + item.source.id + " circle").attr("opacity", REGION_OPACITY);
                             }
                         });
                     }
@@ -382,7 +382,7 @@ function ForceChart() {
             .attr("r", function (d) {
                 return +d.size;
             })
-            .attr("fill-opacity", function (d) {
+            .attr("opacity", function (d) {
                 return +d.opacity;
             })
             .attr("fill", function (d) {
@@ -685,9 +685,9 @@ function ForceChart() {
 
     ForceChart.prototype.update = function (data) {
         mainChart.svg_links.attr("stroke-opacity", LOW_MAIN_OPACITY);
-        mainChart.svg_nodes.attr("fill-opacity", LOW_MAIN_OPACITY);
+        mainChart.svg_nodes.attr("opacity", LOW_MAIN_OPACITY);
         data.forEach(function (value) {
-            d3.select("#node_" + value + " circle").attr("fill-opacity", REGION_OPACITY);
+            d3.select("#node_" + value + " circle").attr("opacity", REGION_OPACITY);
         });
     };
 
@@ -695,7 +695,7 @@ function ForceChart() {
         mainChart.svg_links.attr("stroke-opacity", function (d) {
             return +d.opacity;
         });
-        mainChart.svg_nodes.attr("fill-opacity", function (d) {
+        mainChart.svg_nodes.attr("opacity", function (d) {
             return +d.opacity;
         });
     };
@@ -716,7 +716,7 @@ function ForceChart() {
     };
 
     ForceChart.prototype.setNodeOpacity = function (node_opacity) {
-        mainChart.selected_node.attr("fill-opacity", node_opacity);
+        mainChart.selected_node.attr("opacity", node_opacity);
         mainChart.selected_node_data.opacity = node_opacity.toString();
     };
 
