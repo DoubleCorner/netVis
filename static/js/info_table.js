@@ -23,7 +23,7 @@ function InfTable() {
         sortable: true,
         pageSize: 10,
         showRefresh: true,
-        pageList: [10, 50, 100, 200, "All"],
+        pageList: [10, 50, 200, "All"],
         uniqueId: "node"
     });
 
@@ -51,7 +51,7 @@ function InfTable() {
         });
         if (result.length)
             now_layout.update(result);
-        else{
+        else {
             now_layout.restore();
             info_table.restore();
         }
