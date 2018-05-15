@@ -125,7 +125,7 @@ def up_load_file():
         file_data = request.files['upload']
         if file_data:
             global upload_file_index
-            upload_path = 'files/uploadFiles/' + upload_file_index + '.json'
+            upload_path = 'files/uploadFiles/' + bytes(upload_file_index) + '.json'
             file_data.save(upload_path)
             upload_file_index += 1
             return upload_path
