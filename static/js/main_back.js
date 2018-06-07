@@ -697,7 +697,7 @@ function BackChart() {
     };
 
     BackChart.prototype.setNodeSize = function (node_size) {
-        mainChart.selected_node.attr("r", node_size);
+        mainChart.selected_node.attr("r", node_size / mainChart.scale);
         mainChart.selected_node_data.size = node_size.toString();
     };
 
@@ -717,7 +717,7 @@ function BackChart() {
     };
 
     BackChart.prototype.setEdgeWidth = function (link_width) {
-        mainChart.selected_link.attr("stroke-width", link_width);
+        mainChart.selected_link.attr("stroke-width", link_width / mainChart.scale);
         mainChart.selected_link_data = link_width;
     };
 
