@@ -726,7 +726,7 @@ function ForceChart() {
     };
 
     ForceChart.prototype.setEdgeWidth = function (link_width) {
-        mainChart.svg_links.attr("stroke-width", link_width);
+        mainChart.selected_link.attr("stroke-width", link_width);
         mainChart.selected_link_data = link_width;
     };
 
