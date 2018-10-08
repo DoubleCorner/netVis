@@ -23,15 +23,16 @@
 
     <link rel="stylesheet" href="../static/css/lib/bootstrap-table.css">
 
-
 </head>
+<body>
 <div id="header">
     <span class="title">网络结构可视分析系统</span>
     <span class="time"></span>
 </div>
 <div id="all_view">
     <form role="form" method="post" enctype=multipart/form-data>
-        <input type="file" id="uploadFile" style="visibility:hidden" onchange="control_chart.handleFile(this.files,this.value)">
+        <input type="file" id="uploadFile" style="visibility:hidden"
+               onchange="control_chart.handleFile(this.files,this.value)">
     </form>
 
     <div id="control"></div>
@@ -87,4 +88,5 @@
 
 <script type="text/javascript" src="../static/js/export.js"></script>
 
+</body>
 </html>
