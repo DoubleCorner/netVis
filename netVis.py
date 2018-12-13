@@ -4,15 +4,66 @@ import calNetwork
 from flask import Flask, request
 from flask import render_template, jsonify
 from igraph import *
+import re
+import codecs
 
 upload_file_index = 0
+upload_path = ''  # 保存每次上传数据后的地址，保证上传后 文件不会丢失
 
 app = Flask(__name__)
-
+# 保存的格式和标准格式区别较大  将其转变为标准格式
+def chang_data(res):
+    result = {'links': [], 'nodes': []}
+    nodes = []  # 取出节点
+    node = []
+    for val in res['nodes']:
+        nodes.append({
+            "opacity": val['opacity'],
+            "level": val['level'],
+            "color": val['color'],
+            "continuous": val['continuous'],
+            "port": val['port'],
+            "discrete": val['discrete'],
+            "stroke": val['stroke'],
+            "id": val['id'],
+            "size": val['size']
+        })
+        node.append(val['id'])
+    result['nodes'] = nodes
+    links = []
+    if (isinstance(res['links'][0]['source'], dict)):
+        for val in res['links']:
+            if (val['target']['id'] in node and val['source']['id'] in node):
+                links.append({
+                    "opacity": val['opacity'],
+                    "target": val['target']['id'],
+                    "weight": val['weight'],
+                    "discrete": val['discrete'],
+                    "color": val['color'],
+                    "continuous": val['continuous'],
+                    "source": val['source']['id'],
+                    "id": val['id']
+                })
+    else:
+        for val in res['links']:
+            # 保证source 和 target都在nodes里面
+            if (val['source'] in node and val['target'] in node):
+                links.append({
+                    "opacity": val['opacity'],
+                    "target": val['target'],
+                    "weight": val['weight'],
+                    "discrete": val['discrete'],
+                    "color": val['color'],
+                    "continuous": val['continuous'],
+                    "source": val['source'],
+                    "id": val['id']
+                })
+    result['links'] = links
+    return result
 
 # 计算布局数据
 def cal_back_layout_data(result, layout_type):
-    if layout_type == 'force' or layout_type == 'bundle':
+    if layout_type == 'force' or layout_type == 'bundle' or layout_type == 'incremental':
         return False
     nodes = []
     links = []
@@ -53,20 +104,41 @@ def index():
 # 初始化数据
 @app.route('/initial')
 def get_initial_data():
-    with open('files/jsonFormat/time-line.json') as fi:
-        result = json.load(fi)
-        return jsonify(result)
+    try:  # try ... catch
+        with open('files/jsonFormat/time-line.json') as fi:
+            result = json.load(fi)
+            return jsonify(result)
+    except:
+        print 'error'
+        return jsonify({})
+
 
 
 # 返回布局数据
 @app.route('/layout')
 def get_back_layout_data():
     layout_type = request.args.get('layout_type')
-    with open('files/jsonFormat/small-443nodes-476edges.json') as fi:
-        result = json.load(fi)
-        cal_back_layout_data(result, layout_type)
-        calNetwork.cal_characters_arguments(result)
-        return jsonify(result)
+    global upload_path
+    try:
+        if upload_path:
+            with open(upload_path) as fi:
+                content = fi.read()
+                content = content.decode('utf-8-sig') if content.startswith(codecs.BOM_UTF8) else content
+                result = json.loads(content, encoding='utf8')
+                if(result['nodes'][0].has_key('degree')):
+                    result = chang_data(result)
+                cal_back_layout_data(result, layout_type)
+                calNetwork.cal_characters_arguments(result)
+                return jsonify(result)
+        else:
+            with open('files/jsonFormat/small-443nodes-476edges.json') as fi:
+                result = json.load(fi)
+                cal_back_layout_data(result, layout_type)
+                calNetwork.cal_characters_arguments(result)
+                return jsonify(result)
+    except:
+        print 'error'
+        return jsonify({})
 
 
 # 刷取数据
@@ -85,37 +157,45 @@ def get_brush_extent_data():
     path = 'files/jsonFormat/packages/'
     files = os.listdir(path)
     for f in files:
-        time = f.replace('.json', '')
-        time = time.replace('_', ':')
-        if time == start_time:
-            flag = not flag
-        if time == end_time:
-            flag = not flag
-        if flag:
-            with open(path + f) as fi:
-                json_data = json.load(fi)
-                for node in json_data['nodes']:
-                    if node['id'] not in nodes:
-                        result['nodes'].append(node)
-                        nodes.append(node['id'])
-                    else:
-                        for re_node in result['nodes']:
-                            if re_node['id'] == node['id']:
-                                result['nodes'].remove(re_node)
-                                result['nodes'].append(node)
-                                break
-                for link in json_data['links']:
-                    if link['id'] not in links:
-                        result['links'].append(link)
-                        links.append(link['id'])
-                    else:
-                        for re_link in result['links']:
-                            if re_link['id'] == link['id']:
-                                result['links'].remove(re_link)
-                                result['links'].append(link)
-    cal_back_layout_data(result, layout_type)
-    calNetwork.cal_characters_arguments(result)
-    return jsonify(result)
+        # 排除非标准格式的文件名
+        date = re.match(r"(\d{4}-\d{1,2}-\d{1,2}\s\d{1,2}_\d{1,2})", f)
+        if date:
+            time = f.replace('.json', '')
+            time = time.replace('_', ':')
+            if time == start_time:
+                flag = not flag
+            if time == end_time:
+                flag = not flag
+            if flag:
+                with open(path + f) as fi:
+                    json_data = json.load(fi)
+                    for node in json_data['nodes']:
+                        if node['id'] not in nodes:
+                            result['nodes'].append(node)
+                            nodes.append(node['id'])
+                        else:
+                            for re_node in result['nodes']:
+                                if re_node['id'] == node['id']:
+                                    result['nodes'].remove(re_node)
+                                    result['nodes'].append(node)
+                                    break
+                    for link in json_data['links']:
+                        if link['id'] not in links:
+                            result['links'].append(link)
+                            links.append(link['id'])
+                        else:
+                            for re_link in result['links']:
+                                if re_link['id'] == link['id']:
+                                    result['links'].remove(re_link)
+                                    result['links'].append(link)
+                                    break
+    try:  # try ... catch
+        cal_back_layout_data(result, layout_type)
+        calNetwork.cal_characters_arguments(result)
+        return jsonify(result)
+    except:
+        print 'error'
+        return jsonify({})
 
 
 # 保存上传文件数据
@@ -125,6 +205,7 @@ def up_load_file():
         file_data = request.files['upload']
         if file_data:
             global upload_file_index
+            global upload_path
             upload_path = 'files/uploadFiles/' + bytes(upload_file_index) + '.json'
             file_data.save(upload_path)
             upload_file_index += 1
@@ -139,7 +220,11 @@ def up_load_file_layout():
     layout_type = request.args.get('layout_type')
     file_path = request.args.get('file_path')
     with open(file_path) as fi:
-        result = json.load(fi)
+        content = fi.read()
+        content = content.decode('utf-8-sig') if content.startswith(codecs.BOM_UTF8) else content
+        result = json.loads(content, encoding='utf8')
+        if(result['nodes'][0].has_key('degree')):
+            result = chang_data(result)
         cal_back_layout_data(result, layout_type)
         calNetwork.cal_characters_arguments(result)
         return jsonify(result)

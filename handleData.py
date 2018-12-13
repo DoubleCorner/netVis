@@ -148,3 +148,6 @@ def get_edge_index(all_edges_list, source, target):
 # csv_to_json('files/csvFormat/small-443nodes-476edges.csv', 'files/jsonFormat/small-443nodes-476edges.json')
 # csv_to_json('files/csvFormat/middle-1204nodes-2492edges.csv', 'files/jsonFormat/middle-1204nodes-2492edges.json')
 # csv_to_json('files/csvFormat/large-2992nodes-9696edges.csv', 'files/jsonFormat/large-2992nodes-9696edges.json')
+
+
+get_all_edges_packages()

@@ -124,6 +124,8 @@ function ForceChart() {
     }
 
     function fresh() {
+        $("#loading").css("display", "block"); // loading
+        $("#over").css("display", "block"); // loading
         $.ajax({
             type: "get",
             dataType: "json",
@@ -132,6 +134,8 @@ function ForceChart() {
             async: true,
             contentType: "application/json",
             success: function (d) {
+                $("#loading").css("display", "none");
+                $("#over").css("display", "none");
                 run(d);
             },
             Error: function () {
@@ -316,6 +320,7 @@ function ForceChart() {
             .charge([mainChart.charge_value])
             .start();
 
+
         mainChart.g = mainChart.svg.append("g");
 
         mainChart.svg_links = mainChart.g.selectAll(".links")
@@ -430,6 +435,8 @@ function ForceChart() {
 
         mainChart.svg_nodes.on("click", nodeClick);
 
+        mainChart.svg_nodes.on("dblclick", nodedbleClick);
+
         mainChart.svg_links.on("mouseover", linkMoveOver);
 
         mainChart.svg_links.on("mouseout", linkMoveOut);
@@ -519,13 +526,20 @@ function ForceChart() {
     }
 
     function level(level) {
-        var log = Math.ceil(level);
-        mainChart.svg_nodes_g.attr("display", function (d) {
-            return (parseInt(d.level) > log ? "none" : "block");
-        });
-        mainChart.svg_links.attr("display", function (d) {
-            return ((parseInt(d.target.level) > log || parseInt(d.source.level) > log) ? "none" : "block");
-        });
+        // SHOW_ALL为true 原图显示
+        if (SHOW_ALL) {
+            mainChart.svg_nodes_g.attr("display", "block");
+            mainChart.svg_links.attr("display", "block");
+        }
+        else {
+            var log = Math.ceil(level);
+            mainChart.svg_nodes_g.attr("display", function (d) {
+                return (parseInt(d.level) > log ? "none" : "block");
+            });
+            mainChart.svg_links.attr("display", function (d) {
+                return ((parseInt(d.target.level) > log || parseInt(d.source.level) > log) ? "none" : "block");
+            });
+        }
     }
 
     function miniMap() {
@@ -631,6 +645,20 @@ function ForceChart() {
         }
     }
 
+    // 双击操作
+    function nodedbleClick(d) {
+        var result_link = []
+        mainChart.links.forEach(function (t) {
+            if (t.source.id === d.id) {
+                result_link.push(t.target.id)
+            }
+            else if (t.target.id === d.id) {
+                result_link.push(t.source.id)
+            }
+        })
+        info_table.update(result_link);
+    }
+
     function nodeMoveOver(d) {
         d3.select(this).attr("fill", OVER_COLOR);
         d3.select("#node_" + d.id + " text").attr("visibility", "visible");
@@ -706,38 +734,87 @@ function ForceChart() {
     };
 
     ForceChart.prototype.setNodeSize = function (node_size) {
-        mainChart.selected_node.attr("r", node_size / mainChart.scale);
-        mainChart.selected_node_data.size = node_size.toString();
+        if (NODE_ALL) {
+            mainChart.svg_nodes.attr("r", node_size / mainChart.scale);
+            mainChart.svg_nodes[0].forEach(function (item) {
+                return item.__data__.size = node_size.toString();
+            })
+        } else {
+            mainChart.selected_node.attr("r", node_size / mainChart.scale);
+            mainChart.selected_node_data.size = node_size.toString();
+        }
     };
 
     ForceChart.prototype.setNodeStroke = function (node_stroke) {
-        mainChart.selected_node.attr("stroke", node_stroke);
-        mainChart.selected_node_data.stroke = node_stroke;
+        if (NODE_ALL) {
+            mainChart.svg_nodes.attr("stroke", node_stroke);
+            mainChart.svg_nodes[0].forEach(function (item) {
+                return item.__data__.stroke = node_stroke;
+            })
+        } else {
+            mainChart.selected_node.attr("stroke", node_stroke);
+            mainChart.selected_node_data.stroke = node_stroke;
+        }
     };
 
     ForceChart.prototype.setNodeColor = function (node_color) {
-        mainChart.selected_node.attr("fill", node_color);
-        mainChart.selected_node_data.color = node_color;
+        if (NODE_ALL) {
+            mainChart.svg_nodes.attr("fill", node_color);
+            mainChart.svg_nodes[0].forEach(function (item) {
+                return item.__data__.color = node_color;
+            })
+        } else {
+            mainChart.selected_node.attr("fill", node_color);
+            mainChart.selected_node_data.color = node_color;
+        }
     };
 
     ForceChart.prototype.setNodeOpacity = function (node_opacity) {
-        mainChart.selected_node.attr("opacity", node_opacity);
-        mainChart.selected_node_data.opacity = node_opacity.toString();
+        if (NODE_ALL) {
+            mainChart.svg_nodes.attr("opacity", node_opacity);
+            mainChart.svg_nodes[0].forEach(function (item) {
+                return item.__data__.opacity = node_opacity;
+            })
+        } else {
+            mainChart.selected_node.attr("opacity", node_opacity);
+            mainChart.selected_node_data.opacity = node_opacity.toString();
+        }
     };
 
     ForceChart.prototype.setEdgeWidth = function (link_width) {
-        mainChart.selected_link.attr("stroke-width", link_width / mainChart.scale);
-        mainChart.selected_link_data = link_width;
+        if (EDGE_ALL) {
+            mainChart.svg_links.attr("stroke-width", link_width);
+            mainChart.svg_links[0].forEach(function (item) {
+                return item.__data__.weight = link_width;
+            })
+        } else {
+            mainChart.selected_link.attr("stroke-width", link_width / mainChart.scale);
+            mainChart.selected_link_data.weight = link_width;
+        }
     };
 
     ForceChart.prototype.setEdgeColor = function (edge_color) {
-        mainChart.selected_link.attr("stroke", edge_color);
-        mainChart.selected_link_data.color = edge_color;
+        if (EDGE_ALL) {
+            mainChart.svg_links.attr("stroke", edge_color);
+            mainChart.svg_links[0].forEach(function (item) {
+                return item.__data__.color = edge_color;
+            })
+        } else {
+            mainChart.selected_link.attr("stroke", edge_color);
+            mainChart.selected_link_data.color = edge_color;
+        }
     };
 
     ForceChart.prototype.setEdgeOpacity = function (edge_opacity) {
-        mainChart.selected_link.attr("stroke-opacity", edge_opacity);
-        mainChart.selected_link_data.opacity = edge_opacity;
+        if (EDGE_ALL) {
+            mainChart.svg_links.attr("stroke-opacity", edge_opacity);
+            mainChart.svg_links[0].forEach(function (item) {
+                return item.__data__.opacity = edge_opacity;
+            })
+        } else {
+            mainChart.selected_link.attr("stroke-opacity", edge_opacity);
+            mainChart.selected_link_data.opacity = edge_opacity;
+        }
     };
 
     ForceChart.prototype.setLabelSize = function (font_size) {
@@ -842,4 +919,9 @@ function ForceChart() {
         });
         return result;
     };
+
+    // 给原图显示的接口
+    ForceChart.prototype.setLevel = function () {
+        level(1)
+    }
 }

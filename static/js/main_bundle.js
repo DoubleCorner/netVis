@@ -127,6 +127,8 @@ function BundleChart() {
     }
 
     function fresh() {
+        $("#loading").css("display", "block"); // loading
+        $("#over").css("display", "block"); // loading
         $.ajax({
             type: "get",
             dataType: "json",
@@ -135,6 +137,8 @@ function BundleChart() {
             async: true,
             contentType: "application/json",
             success: function (d) {
+                $("#loading").css("display", "none");
+                $("#over").css("display", "none");
                 run(d);
             },
             Error: function () {
@@ -346,12 +350,15 @@ function BundleChart() {
         /*mainChart.group的变换导致mainChart.g的坐标原点并不在左上角，而在svg的坐标变换中不能设置变换的相对坐标，但是css3可以设置相对坐标（attr使用svg变换，style使用css3变换）*/
         mainChart.g = mainChart.group.append("g")
             .style("transform-origin", (-mainChart.width / 2) + "px " + (-mainChart.height / 2) + "px");
-
+        // console.log('--------------------')
+        // console.log(mainChart.result_links);
         mainChart.svg_links = mainChart.g.selectAll(".links")
             .data(mainChart.result_links)
             .enter()
             .append("path")
-            .attr("id", function (d) {
+            .attr("id", function (d, i) {
+                if(d.length == 1)
+                    return
                 for (var index = 0; index !== mainChart.links.length; index++) {
                     if (d[0].id === mainChart.links[index].source && d[2].id === mainChart.links[index].target) {
                         return "link_" + mainChart.links[index].id;
@@ -359,6 +366,8 @@ function BundleChart() {
                 }
             })
             .attr("stroke-opacity", function (d) {
+                if(d.length == 1)
+                    return
                 for (var index = 0; index !== mainChart.links.length; index++) {
                     if (d[0].id === mainChart.links[index].source && d[2].id === mainChart.links[index].target) {
                         return +mainChart.links[index].opacity;
@@ -366,6 +375,8 @@ function BundleChart() {
                 }
             })
             .attr("stroke", function (d) {
+                if(d.length == 1)
+                    return
                 for (var index = 0; index !== mainChart.links.length; index++) {
                     if (d[0].id === mainChart.links[index].source && d[2].id === mainChart.links[index].target) {
                         return mainChart.links[index].color;
@@ -373,6 +384,9 @@ function BundleChart() {
                 }
             })
             .attr("stroke-width", function (d) {
+                // 有些边没有d[2]
+                if(d.length == 1)
+                    return
                 for (var index = 0; index !== mainChart.links.length; index++) {
                     if (d[0].id === mainChart.links[index].source && d[2].id === mainChart.links[index].target) {
                         return +mainChart.links[index].weight;
@@ -436,6 +450,7 @@ function BundleChart() {
             .attr("fill", mainChart.now_label_color)
             .attr("font-size", mainChart.now_label_size)
             .attr("opacity", mainChart.now_label_opacity)
+            .attr("opacity", mainChart.now_label_opacity)
             .attr("visibility", "hidden")
             .attr("font-family", "sans-serif")
             .text(function (d) {
@@ -447,6 +462,8 @@ function BundleChart() {
         mainChart.svg_nodes.on("mouseout", nodeMoveOut);
 
         mainChart.svg_nodes.on("click", nodeClick);
+
+        mainChart.svg_nodes.on("dblclick", nodedbleClick);
 
         mainChart.svg_links.on("mouseover", linkMoveOver);
 
@@ -467,13 +484,21 @@ function BundleChart() {
     }
 
     function level(level) {
-        var log = Math.ceil(level);
-        mainChart.svg_nodes_g.attr("display", function (d) {
-            return (parseInt(d.level) > log ? "none" : "block");
-        });
-        mainChart.svg_links.attr("display", function (d) {
-            return ((parseInt(d[0].level) > log || parseInt(d[2].level) > log) ? "none" : "block");
-        });
+        if (SHOW_ALL) {
+            mainChart.svg_nodes_g.attr("display", "block");
+            mainChart.svg_links.attr("display", "block");
+        }
+        else {
+            var log = Math.ceil(level);
+            mainChart.svg_nodes_g.attr("display", function (d) {
+                return (parseInt(d.level) > log ? "none" : "block");
+            });
+            mainChart.svg_links.attr("display", function (d) {
+                if(d.length == 1)
+                    return "none"
+                return ((parseInt(d[0].level) > log || parseInt(d[2].level) > log) ? "none" : "block");
+            });
+        }
     }
 
     function miniMap() {
@@ -591,6 +616,21 @@ function BundleChart() {
         }
     }
 
+
+    // 双击操作
+    function nodedbleClick(d) {
+        var result_link = []
+        mainChart.links.forEach(function (t) {
+            if (t.source === d.id) {
+                result_link.push(t.target)
+            } else if (t.target === d.id) {
+                result_link.push(t.source)
+            }
+        })
+        console.log(result_link);
+        info_table.update(result_link);
+    }
+
     function nodeMoveOver(d) {
         d3.select(this).attr("fill", OVER_COLOR);
         d3.select("#node_" + d.id + " text").attr("visibility", "visible").attr("fill", OVER_COLOR);
@@ -663,38 +703,87 @@ function BundleChart() {
     };
 
     BundleChart.prototype.setNodeColor = function (node_color) {
-        mainChart.selected_node.attr("fill", node_color);
-        mainChart.selected_node_data.color = node_color;
+        if (NODE_ALL) {
+            mainChart.svg_nodes.attr("fill", node_color);
+            mainChart.svg_nodes[0].forEach(function (item) {
+                return item.__data__.color = node_color;
+            })
+        } else {
+            mainChart.selected_node.attr("fill", node_color);
+            mainChart.selected_node_data.color = node_color;
+        }
     };
 
     BundleChart.prototype.setNodeStroke = function (node_stroke) {
-        mainChart.selected_node.attr("stroke", node_stroke);
-        mainChart.selected_node_data.stroke = node_stroke;
+        if (NODE_ALL) {
+            mainChart.svg_nodes.attr("stroke", node_stroke);
+            mainChart.svg_nodes[0].forEach(function (item) {
+                return item.__data__.stroke = node_stroke;
+            })
+        } else {
+            mainChart.selected_node.attr("stroke", node_stroke);
+            mainChart.selected_node_data.stroke = node_stroke;
+        }
     };
 
-     BundleChart.prototype.setNodeSize = function (node_size) {
-        mainChart.selected_node.attr("r", node_size / mainChart.scale);
-        mainChart.selected_node_data.size = node_size.toString();
+    BundleChart.prototype.setNodeSize = function (node_size) {
+        if (NODE_ALL) {
+            mainChart.svg_nodes.attr("r", node_size / mainChart.scale);
+            mainChart.svg_nodes[0].forEach(function (item) {
+                return item.__data__.size = node_size.toString();
+            })
+        } else {
+            mainChart.selected_node.attr("r", node_size / mainChart.scale);
+            mainChart.selected_node_data.size = node_size.toString();
+        }
     };
 
     BundleChart.prototype.setNodeOpacity = function (node_opacity) {
-        mainChart.selected_node.attr("opacity", node_opacity);
-        mainChart.selected_node_data.opacity = node_opacity.toString();
+        if (NODE_ALL) {
+            mainChart.svg_nodes.attr("opacity", node_opacity);
+            mainChart.svg_nodes[0].forEach(function (item) {
+                return item.__data__.opacity = node_opacity;
+            })
+        } else {
+            mainChart.selected_node.attr("opacity", node_opacity);
+            mainChart.selected_node_data.opacity = node_opacity.toString();
+        }
     };
 
     BundleChart.prototype.setEdgeWidth = function (link_width) {
-        mainChart.selected_link.attr("stroke-width", link_width / mainChart.scale);
-        mainChart.selected_link_data = link_width;
+        if (EDGE_ALL) {
+            mainChart.svg_links.attr("stroke-width", link_width);
+            mainChart.svg_links[0].forEach(function (item) {
+                return item.__data__.weight = link_width;
+            })
+        } else {
+            mainChart.selected_link.attr("stroke-width", link_width / mainChart.scale);
+            mainChart.selected_link_data.weight = link_width;
+        }
     };
 
     BundleChart.prototype.setEdgeColor = function (edge_color) {
-        mainChart.selected_link.attr("stroke", edge_color);
-        mainChart.selected_link_data.color = edge_color;
+        if (EDGE_ALL) {
+            mainChart.svg_links.attr("stroke", edge_color);
+            mainChart.svg_links[0].forEach(function (item) {
+                return item.__data__.color = edge_color;
+            })
+        } else {
+            mainChart.selected_link.attr("stroke", edge_color);
+            mainChart.selected_link_data.color = edge_color;
+        }
     };
 
     BundleChart.prototype.setEdgeOpacity = function (edge_opacity) {
-        mainChart.selected_link.attr("stroke-opacity", edge_opacity);
-        mainChart.selected_link_data.opacity = edge_opacity;
+        if (EDGE_ALL) {
+            mainChart.svg_links.attr("stroke-opacity", edge_opacity);
+            mainChart.svg_links[0].forEach(function (item) {
+                return item.__data__.opacity = edge_opacity;
+            })
+        } else {
+            mainChart.selected_link.attr("stroke-opacity", edge_opacity);
+            mainChart.selected_link_data.opacity = edge_opacity;
+        }
     };
 
     BundleChart.prototype.setLabelSize = function (font_size) {
@@ -802,4 +891,10 @@ function BundleChart() {
         });
         return result;
     };
+
+    // 给原图显示的接口
+    BundleChart.prototype.setLevel = function () {
+        // console.log('222');
+        level(1)
+    }
 }

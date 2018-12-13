@@ -1,6 +1,7 @@
 var init_data_line;
 var time_chart;
-
+// loading的样式
+$("#loading").css('margin-top', $("#main").height()/2 - 100 +  'px')
 function InitData() {
     $.ajax({
         type: "get",

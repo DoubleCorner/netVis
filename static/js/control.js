@@ -1,9 +1,11 @@
 function ControlChart() {
     var obj = {
+        '修改所有点': false,
         '节点尺寸': 2,
         '节点边线': "#fffaf0",
         '节点填充': "#FFFFFF",
         '节点透明度': 0.9,
+        '修改所有边': false,
         '边宽度': 1,
         '边填充': "#FFFFFF",
         '边透明度': 0.7,
@@ -16,6 +18,8 @@ function ControlChart() {
         '标签尺寸': INIT_LABEL_SIZE,
         '标签透明度': INIT_LABEL_OPACITY,
         '布局': '力导向布局',
+        "增量式布局": false,
+        '原图显示': false,
         '主视图截图': function () {
             if ($("#header").attr("Capture") !== "Ready") alert("插件未安装!");
         },
@@ -35,11 +39,15 @@ function ControlChart() {
     var gui = new dat.gui.GUI();
 
     var f1 = gui.addFolder('节点');
+    var node_all = f1.add(obj, '修改所有点').listen();
     var node_stroke = f1.addColor(obj, '节点边线');
     var node_size = f1.add(obj, '节点尺寸').min(2).max(10).step(0.1);
     var node_color = f1.addColor(obj, '节点填充');
     var node_opacity = f1.add(obj, '节点透明度').min(0).max(1).step(0.05);
     /*节点信息监听*/
+    node_all.onFinishChange(function (value) {
+        NODE_ALL = !NODE_ALL
+    });
     node_stroke.onFinishChange(function (value) {
         now_layout.setNodeStroke(value);
     });
@@ -53,6 +61,7 @@ function ControlChart() {
         now_layout.setNodeOpacity(value);
     });
     var f2 = gui.addFolder('边');
+    var edge_all = f2.add(obj, '修改所有边').listen();
     var edge_width = f2.add(obj, '边宽度').min(1).max(4).step(0.1);
     var edge_color = f2.addColor(obj, '边填充');
     var edge_opacity = f2.add(obj, '边透明度').min(0).max(1).step(0.05);
@@ -64,6 +73,9 @@ function ControlChart() {
     edge_discrete.__input.disabled = true;
     edge_id.__input.disabled = true;
     /*边信息监听*/
+    edge_all.onFinishChange(function (value) {
+        EDGE_ALL = !EDGE_ALL
+    });
     edge_width.onFinishChange(function (value) {
         now_layout.setEdgeWidth(value);
     });
@@ -73,14 +85,18 @@ function ControlChart() {
     edge_opacity.onFinishChange(function (value) {
         now_layout.setEdgeOpacity(value);
     });
+
+
     var f3 = gui.addFolder('标签');
-    var label_type = f3.add(obj, '标签类别', ['编号', '端口', '连续属性', '离散属性', '度', '度中心性', '接近中心性', '介数中心性', '特征向量中心性', '聚类系数']).listen();
     var label_show = f3.add(obj, '标签显示').listen();
+    var all_show = f3.add(obj, '原图显示').listen();
+    var label_type = f3.add(obj, '标签类别', ['编号', '端口', '连续属性', '离散属性', '度', '度中心性', '接近中心性', '介数中心性', '特征向量中心性', '聚类系数']).listen();
     var label_size = f3.add(obj, '标签尺寸').min(5).max(18).step(1);
     var label_color = f3.addColor(obj, '标签填充');
     var label_opacity = f3.add(obj, '标签透明度').min(0).max(1).step(0.05);
     /*标签信息监听*/
     label_type.onFinishChange(function (value) {
+        LAYOUT_TYPE = value
         now_layout.setLabelType(value);
     });
     label_show.onFinishChange(function (value) {
@@ -95,12 +111,20 @@ function ControlChart() {
     label_opacity.onFinishChange(function (value) {
         now_layout.setLabelOpacity(value);
     });
+    all_show.onFinishChange(function () {
+        if (now_layout_type == 'incremental') {
+            return
+        }
+        SHOW_ALL = !SHOW_ALL
+        now_layout.setLevel()
+    })
 
-    var layout_text = gui.add(obj, '布局', ['力导向布局', '捆图布局', '随机布局', '椭圆布局', 'graphopt布局', '多元尺度布局', '网格布局', '大图布局', '分布式递归布局', '层次化布局', '环状RT树布局']);
+    var layout_text = gui.add(obj, '布局', ['力导向布局', '捆图布局', '随机布局', '椭圆布局', 'graphopt布局', '多元尺度布局', '网格布局', '大图布局', '分布式递归布局', '层次化布局', '环状RT树布局', '增量式布局']);
     /*布局信息监听*/
     layout_text.onChange(function (value) {
         clearMainChart();
         control_chart.initParameters();
+        d3.select('#clear_brush').style('display', 'block');
         switch (value) {
             case '力导向布局':
                 now_layout_type = 'force';
@@ -146,10 +170,17 @@ function ControlChart() {
                 now_layout_type = 'rt_circular';
                 now_layout = new BackChart();
                 break;
+            case '增量式布局':
+                now_layout_type = 'incremental';
+                now_layout = new IncrementalLayout();
+                now_layout.init();
+                d3.select('#clear_brush').style('display', 'none');
+                break;
             default:
                 break;
         }
     });
+
 
     var f4 = gui.addFolder('工具');
     f4.add(obj, '主视图截图');
@@ -178,6 +209,10 @@ function ControlChart() {
         }
         var file_data = new FormData();
         file_data.append("upload", $("#uploadFile")[0].files[0]);
+        // loading...
+
+        $("#loading").css("display", "block");
+        $("#over").css("display", "block");
         $.ajax({
             type: "post",
             url: "/upload_file",
@@ -195,6 +230,8 @@ function ControlChart() {
                         async: true,
                         contentType: "application/json",
                         success: function (d2) {
+                            $("#loading").css("display", "none");
+                            $("#over").css("display", "none");
                             now_layout.updateFromOthers(d2);
                         }
                     })
@@ -210,13 +247,19 @@ function ControlChart() {
         $("#uploadFile").val("").change();
     };
 
-    ControlChart.prototype.initParameters = function (d) {
+    ControlChart.prototype.initParameters = function () {
         //listen和onChange同时使用，导致input无法输入，setValue可以解决。
         label_size.setValue(INIT_LABEL_SIZE);
         label_color.setValue(INIT_LABEL_COLOR);
         label_opacity.setValue(INIT_LABEL_OPACITY);
         obj.标签显示 = false;
         obj.标签类别 = "编号";
+        obj.修改所有点 = false;
+        obj.修改所有边 = false;
+        obj.原图显示 = false;
+        SHOW_ALL = false
+        NODE_ALL = false;
+        EDGE_ALL = false;
     };
 
     ControlChart.prototype.updateNode = function (d) {
@@ -235,6 +278,11 @@ function ControlChart() {
         edge_id.setValue(d.id);
     }
 }
+
+var NODE_ALL = false;
+var EDGE_ALL = false;
+var SHOW_ALL = false;
+var LAYOUT_TYPE = '编号'
 
 var now_layout;
 var now_layout_type = "";

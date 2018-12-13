@@ -131,7 +131,7 @@ function InfChart() {
         });
         document.getElementById('information').appendChild(gui.domElement);
         /*禁止用户输入*/
-        d3.select("#information").selectAll("input").attr("readonly", "readonly");
+        d3.select("#information").selectAll("input").attr("readonly", "readonly").attr('disabled','true')
     };
 
     InfChart.prototype.update = function (item) {
@@ -146,6 +146,7 @@ function InfChart() {
         obj.特征向量中心性 = item.eigenvector_centrality;
         obj.聚类系数 = item.clustering;
     };
+
 
     function drawGraph(type) {
         var item_div;
@@ -648,6 +649,7 @@ function InfChart() {
                 .concat(item_list.continuous.select_data)
                 .concat(item_list.discrete.select_data);
             var result = d3.set(multiple_result).values();
+            // console.log(result);
             info_table.update(result);
             now_layout.update(result);
         }

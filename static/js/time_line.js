@@ -26,7 +26,7 @@ function TimeLineChart() {
                     d3.select(this).select("span").attr("class", "glyphicon glyphicon-pause");
                     timeChart.play_pause = false;
                     play();
-                    timeChart.button_earse.remove();
+                    d3.select('#clear_brush').style('display', 'none');
                 }
                 else {
                     d3.select(this).attr("title", "点击播放");
@@ -38,6 +38,7 @@ function TimeLineChart() {
         timeChart.button_play.append("span")
             .attr("class", "glyphicon glyphicon-play")
             .attr("aria-hidden", "true");
+        createErase();
     }
 
     function createErase() {
@@ -46,6 +47,8 @@ function TimeLineChart() {
                 "type": "button",
                 "class": "btn btn-default"
             })
+            .attr('id', 'clear_brush')
+            .style('display', 'block')
             .attr("title", "清空选定")
             .on("click", function () {
                 clearBrush();
@@ -176,9 +179,15 @@ function TimeLineChart() {
     }
 
     function stop() {
-        createErase();
         createBrush();
         clearInterval(timeChart.timer);
+        if (now_layout_type === 'incremental') {
+            d3.select('#clear_brush').style('display', 'none');
+            // removeBrush()
+        } else {
+            d3.select('#clear_brush').style('display', 'block');
+            // createBrush()
+        }
     }
 
     function brushEnd() {
@@ -206,23 +215,31 @@ function TimeLineChart() {
     }
 
     function updateMain(extent) {
-        $.ajax({
-            type: "get",
-            dataType: "json",
-            url: "/brush_extent",
-            data: {
-                "layout_type": now_layout_type,
-                "start": FormatDateTime(extent[0]),
-                "end": FormatDateTime(extent[1])
-            },
-            contentType: "application/json",
-            success: function (d) {
-                now_layout.updateFromOthers(d);
-            },
-            Error: function () {
-                console.log("error");
-            }
-        });
+        var ajaxUpDate = function () {
+            $.ajax({
+                type: "get",
+                dataType: "json",
+                url: "/brush_extent",
+                data: {
+                    "layout_type": now_layout_type,
+                    "start": FormatDateTime(extent[0]),
+                    "end": FormatDateTime(extent[1])
+                },
+                contentType: "application/json",
+                success: function (d) {
+                    if (JSON.stringify(d) === '{}') {
+                        // console.log('失败了');
+                        ajaxUpDate()
+                        return
+                    }
+                    now_layout.updateFromOthers(d);
+                },
+                Error: function () {
+                    console.log("error");
+                }
+            });
+        }
+        ajaxUpDate()
     }
 
     function clearBrush() {
@@ -281,4 +298,4 @@ var INIT_RECT_COLOR = "#C4C9CF";
 var TIME_INTERVAL = 5;
 var MAX_PACKAGES = 10;
 var INIT_RECT_OPACITY = 0.9;
-var REFRESH_FREQUENCY = 2000;
+var REFRESH_FREQUENCY = 5000;
