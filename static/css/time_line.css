@@ -1,21 +1,21 @@
 #time_line {
-    position: absolute;
-    bottom: 10%;
-    left: 0;
-    border: solid gray;
-    border-width: 1px 1px 1px 0;
-    width: 60%;
-    height: 20%;
+  position: absolute;
+  bottom: 10%;
+  left: 0;
+  border: solid gray;
+  border-width: 1px 1px 1px 0;
+  width: 60%;
+  height: 20%;
 }
 
 #time_line_tools {
-    position: absolute;
-    z-index: 10;
-    top: 0;
-    left: 0;
+  position: absolute;
+  z-index: 10;
+  top: 0;
+  left: 0;
 }
 
 #time_line_tools .btn-group-vertical {
-    margin-left: 10px;
-    margin-top: 10px;
+  margin-left: 10px;
+  margin-top: 10px;
 }

@@ -65,7 +65,12 @@ def csv_to_json(csv_file, json_file):
         name['discrete'] = str(random.randint(1, 100))
 
     with open(json_file, 'w') as out_file:
-        json.dump({'nodes': json_nodes, 'links': json_edges}, out_file, ensure_ascii=False)
+        json.dump({
+            'nodes': json_nodes,
+            'links': json_edges
+        },
+                  out_file,
+                  ensure_ascii=False)
 
 
 def get_all_edges_packages():
@@ -106,7 +111,8 @@ def packages_csv_to_json():
         for item in data:
             json_edges.append(item)
         for index, name in enumerate(json_edges):
-            name['id'] = get_edge_index(all_edges_id, name['source'], name['target'])
+            name['id'] = get_edge_index(all_edges_id, name['source'],
+                                        name['target'])
             name['continuous'] = str(index + 1)
             name['source'] = str(name['source'])
             name['target'] = str(name['target'])
@@ -128,8 +134,14 @@ def packages_csv_to_json():
             name['port'] = str(random.randint(10, 65536))
             name['level'] = str(random.randint(1, 7))
             name['discrete'] = str(random.randint(1, 100))
-        with open('files/jsonFormat/packages/' + f.replace('.csv', '.json'), 'w') as out_file:
-            json.dump({'nodes': json_nodes, 'links': json_edges}, out_file, ensure_ascii=False)
+        with open('files/jsonFormat/packages/' + f.replace('.csv', '.json'),
+                  'w') as out_file:
+            json.dump({
+                'nodes': json_nodes,
+                'links': json_edges
+            },
+                      out_file,
+                      ensure_ascii=False)
         print(f)
 
 
@@ -148,6 +160,5 @@ def get_edge_index(all_edges_list, source, target):
 # csv_to_json('files/csvFormat/small-443nodes-476edges.csv', 'files/jsonFormat/small-443nodes-476edges.json')
 # csv_to_json('files/csvFormat/middle-1204nodes-2492edges.csv', 'files/jsonFormat/middle-1204nodes-2492edges.json')
 # csv_to_json('files/csvFormat/large-2992nodes-9696edges.csv', 'files/jsonFormat/large-2992nodes-9696edges.json')
-
 
 get_all_edges_packages()

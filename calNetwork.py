@@ -57,8 +57,10 @@ def cal_characters_arguments(result):
     for node in result['nodes']:
         node_id = node['id']
         node['degree'] = str(degree_list[node_id])
-        node['degree_centrality'] = str(my_round(degree_centrality_list[node_id]))
+        node['degree_centrality'] = str(
+            my_round(degree_centrality_list[node_id]))
         node['closeness_centrality'] = str(my_round(closeness_list[node_id]))
         node['betweness_centrality'] = str(my_round(betweness_list[node_id]))
-        node['eigenvector_centrality'] = str(my_round(eigenvector_list[node_id]))
+        node['eigenvector_centrality'] = str(
+            my_round(eigenvector_list[node_id]))
         node['clustering'] = str(my_round(clustering_list[node_id]))

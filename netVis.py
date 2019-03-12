@@ -11,7 +11,10 @@ upload_file_index = 0
 upload_path = ''  # 保存每次上传数据后的地址，保证上传后 文件不会丢失
 
 app = Flask(__name__)
+
 # 保存的格式和标准格式区别较大  将其转变为标准格式
+
+
 def chang_data(res):
     result = {'links': [], 'nodes': []}
     nodes = []  # 取出节点
@@ -61,7 +64,10 @@ def chang_data(res):
     result['links'] = links
     return result
 
+
 # 计算布局数据
+
+
 def cal_back_layout_data(result, layout_type):
     if layout_type == 'force' or layout_type == 'bundle' or layout_type == 'incremental':
         return False
@@ -113,7 +119,6 @@ def get_initial_data():
         return jsonify({})
 
 
-
 # 返回布局数据
 @app.route('/layout')
 def get_back_layout_data():
@@ -123,9 +128,10 @@ def get_back_layout_data():
         if upload_path:
             with open(upload_path) as fi:
                 content = fi.read()
-                content = content.decode('utf-8-sig') if content.startswith(codecs.BOM_UTF8) else content
+                content = content.decode('utf-8-sig') if content.startswith(
+                    codecs.BOM_UTF8) else content
                 result = json.loads(content, encoding='utf8')
-                if(result['nodes'][0].has_key('degree')):
+                if (result['nodes'][0].has_key('degree')):
                     result = chang_data(result)
                 cal_back_layout_data(result, layout_type)
                 calNetwork.cal_characters_arguments(result)
@@ -206,7 +212,8 @@ def up_load_file():
         if file_data:
             global upload_file_index
             global upload_path
-            upload_path = 'files/uploadFiles/' + bytes(upload_file_index) + '.json'
+            upload_path = 'files/uploadFiles/' + \
+                bytes(upload_file_index) + '.json'
             file_data.save(upload_path)
             upload_file_index += 1
             return upload_path
@@ -221,9 +228,10 @@ def up_load_file_layout():
     file_path = request.args.get('file_path')
     with open(file_path) as fi:
         content = fi.read()
-        content = content.decode('utf-8-sig') if content.startswith(codecs.BOM_UTF8) else content
+        content = content.decode('utf-8-sig') if content.startswith(
+            codecs.BOM_UTF8) else content
         result = json.loads(content, encoding='utf8')
-        if(result['nodes'][0].has_key('degree')):
+        if (result['nodes'][0].has_key('degree')):
             result = chang_data(result)
         cal_back_layout_data(result, layout_type)
         calNetwork.cal_characters_arguments(result)
